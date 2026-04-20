@@ -66,7 +66,13 @@ function findErrorPoints(entries: LogEntry[]): number[] {
 
 export function analyzeDiscrepancy(entries: LogEntry[]): AnalysisResult {
   const attempts = groupPaymentAttempts(entries)
-  const { conclusion, actualApprovalCount, isDuplicatePaymentSuspected } = generateConclusion(attempts)
+  const generated = generateConclusion(attempts)
+  const hasTerminalLog = entries.some(e => e.source === 'TERMINAL')
+
+  let { conclusion } = generated
+  if (!hasTerminalLog && entries.length > 0) {
+    conclusion += '\n(단말기 로그 없이 포스 로그만으로 분석한 결과입니다. 정확한 VAN 승인 여부는 단말기 로그로 확인 필요.)'
+  }
 
   return {
     posType: detectPosType(entries),
@@ -77,7 +83,7 @@ export function analyzeDiscrepancy(entries: LogEntry[]): AnalysisResult {
     errorPoints: findErrorPoints(entries),
     attempts,
     conclusion,
-    actualApprovalCount,
-    isDuplicatePaymentSuspected,
+    actualApprovalCount: generated.actualApprovalCount,
+    isDuplicatePaymentSuspected: generated.isDuplicatePaymentSuspected,
   }
 }

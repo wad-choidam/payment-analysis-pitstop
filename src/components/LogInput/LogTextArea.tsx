@@ -6,9 +6,10 @@ interface LogTextAreaProps {
   value: string
   onChange: (value: string) => void
   placeholder?: string
+  showFileUpload?: boolean
 }
 
-export function LogTextArea({ label, value, onChange, placeholder }: LogTextAreaProps) {
+export function LogTextArea({ label, value, onChange, placeholder, showFileUpload = true }: LogTextAreaProps) {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -53,20 +54,24 @@ export function LogTextArea({ label, value, onChange, placeholder }: LogTextArea
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-gray-400 text-sm font-bold">{label}</span>
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="text-xs text-[#00d2ff] hover:text-[#00e5ff] cursor-pointer"
-        >
-          파일 선택
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".txt,.log,.xlsx,.xls"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
+        {showFileUpload && (
+          <>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-xs text-[#00d2ff] hover:text-[#00e5ff] cursor-pointer"
+            >
+              파일 선택
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt,.log,.xlsx,.xls"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+          </>
+        )}
       </div>
       <textarea
         value={value}

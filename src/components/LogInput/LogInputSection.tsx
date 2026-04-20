@@ -31,11 +31,14 @@ export function LogInputSection({
           label="📋 포스 로그 (POS Log)"
           value={posLog}
           onChange={onPosLogChange}
+          placeholder="엑셀(.xlsx) 파일을 드래그하거나 텍스트를 붙여넣으세요..."
         />
         <LogTextArea
           label="📋 단말기 로그 (Terminal Log)"
           value={terminalLog}
           onChange={onTerminalLogChange}
+          showFileUpload={false}
+          placeholder="단말기 로그를 붙여넣으세요"
         />
       </div>
       <div className="mt-4 flex items-center justify-center gap-3">
