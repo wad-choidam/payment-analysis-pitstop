@@ -5,3 +5,6 @@
 - 서브에이전트에게도 커밋하지 말라고 명시할 것.
 - 커밋 메시지는 한글로 작성한다.
 - 커밋 메시지 앞에 conventional commit prefix를 붙인다 (feat:, fix:, chore:, docs: 등).
+
+## 문서
+- 결제 불일치 로직(파서, 분석기 등) 수정 시 `docs/ANALYSIS_GUIDE.md`도 함께 업데이트한다.
