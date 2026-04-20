@@ -11,6 +11,7 @@ import { parseTerminalLog } from '../parser/terminalLogParser'
 import { mergeLogEntries } from '../parser/logMerger'
 import { analyzeDiscrepancy } from '../analyzer/discrepancyAnalyzer'
 import type { AnalysisResult } from '../types'
+import { SAMPLE_BPOS_LOG } from '../data/sampleLogs'
 
 export function AnalyzePage() {
   const [posLog, setPosLog] = useState('')
@@ -18,17 +19,20 @@ export function AnalyzePage() {
   const [serviceType, setServiceType] = useState<string | undefined>()
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [sampleLoaded, setSampleLoaded] = useState(false)
 
   const handleReset = useCallback(() => {
     setPosLog('')
     setTerminalLog('')
     setServiceType(undefined)
     setResult(null)
+    setSampleLoaded(false)
   }, [])
 
   const handleAnalyze = useCallback(() => {
     setResult(null)
     setIsLoading(true)
+    setSampleLoaded(false)
 
     setTimeout(() => {
       const posEntries = parsePosLog(posLog)
@@ -40,18 +44,44 @@ export function AnalyzePage() {
     }, 400)
   }, [posLog, terminalLog, serviceType])
 
+  const handleLoadSample = useCallback(() => {
+    setPosLog(SAMPLE_BPOS_LOG)
+    setTerminalLog('')
+    setServiceType('BPOS')
+    setResult(null)
+    setSampleLoaded(true)
+  }, [])
+
   const isAnalyzable = posLog.trim().length > 0 || terminalLog.trim().length > 0
 
   return (
     <>
       {!isLoading && !result && (
-        <Link
-          to="/guide"
-          className="flex items-center gap-2 border-b border-[#0f3460] px-6 py-3 text-sm text-gray-300 hover:text-[#00d2ff] hover:bg-[#162a50] transition-colors animate-guide-pulse"
-        >
-          <span className="animate-icon-bounce">📖</span>
-          <span>결제 불일치 분석이 처음이라면 <span className="underline font-bold text-[#00d2ff]">가이드</span>를 확인하세요</span>
-        </Link>
+        <>
+          <Link
+            to="/guide"
+            className="flex items-center gap-2 border-b border-[#0f3460] px-6 py-3 text-sm text-gray-300 hover:text-[#00d2ff] hover:bg-[#162a50] transition-colors animate-guide-pulse"
+          >
+            <span>📖</span>
+            <span>결제 불일치 분석이 처음이라면 <span className="underline font-bold text-[#00d2ff]">가이드</span>를 확인하세요</span>
+          </Link>
+          <div className="border-b border-[#0f3460] px-6 py-4 bg-gradient-to-r from-[#16213e] via-[#1a2d5c] to-[#16213e]">
+            <div className="flex items-center gap-4 flex-wrap">
+              <button
+                type="button"
+                onClick={handleLoadSample}
+                disabled={sampleLoaded}
+                className="text-sm font-bold px-5 py-2 rounded-md bg-[#00d2ff] text-[#0a0a1a] hover:bg-[#00b8e6] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-lg shadow-[#00d2ff]/20 hover:shadow-[#00d2ff]/40 hover:scale-105 active:scale-100 shrink-0"
+              >
+                {sampleLoaded ? '✓ 예시 로그 불러옴' : '✨ 예시로 분석해보기 →'}
+              </button>
+              <div>
+                <div className="text-sm font-bold text-white">처음이시라면 예시 로그로 체험해보세요</div>
+                <div className="text-xs text-gray-400 mt-0.5">실제 분석 사례(미무 1274840)를 한 번에 불러옵니다</div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       <LogInputSection
@@ -63,6 +93,7 @@ export function AnalyzePage() {
         onAnalyze={handleAnalyze}
         onReset={handleReset}
         isAnalyzable={isAnalyzable}
+        sampleLoaded={sampleLoaded}
       />
 
       {isLoading && (
