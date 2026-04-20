@@ -1,4 +1,6 @@
 import type { AnalysisResult, LogEntry, PosType, TerminalType } from '../types'
+import { groupPaymentAttempts } from './attemptGrouper'
+import { generateConclusion } from './conclusionGenerator'
 
 function detectPosType(entries: LogEntry[]): PosType {
   for (const entry of entries) {
@@ -63,6 +65,9 @@ function findErrorPoints(entries: LogEntry[]): number[] {
 }
 
 export function analyzeDiscrepancy(entries: LogEntry[]): AnalysisResult {
+  const attempts = groupPaymentAttempts(entries)
+  const { conclusion, actualApprovalCount, isDuplicatePaymentSuspected } = generateConclusion(attempts)
+
   return {
     posType: detectPosType(entries),
     terminal: detectTerminal(entries),
@@ -70,5 +75,9 @@ export function analyzeDiscrepancy(entries: LogEntry[]): AnalysisResult {
     ptxId: findPtxId(entries),
     entries,
     errorPoints: findErrorPoints(entries),
+    attempts,
+    conclusion,
+    actualApprovalCount,
+    isDuplicatePaymentSuspected,
   }
 }

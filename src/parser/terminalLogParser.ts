@@ -62,7 +62,7 @@ const RULES: TerminalRule[] = [
     status: 'info',
   },
 
-  // POS 응답 (순서 중요: 0000 → 9999 → 기타)
+  // POS 응답 (순서 중요: 0000 → 9999 → 특정코드 → 기타)
   {
     pattern: /<RESPONSE>: \[T650P -> POS\] req: CARD_APPROVAL\(\d+\) \| res: 0000/,
     event: '승인 성공 응답',
@@ -71,6 +71,16 @@ const RULES: TerminalRule[] = [
   {
     pattern: /<RESPONSE>: \[T650P -> POS\] req: CARD_APPROVAL\(\d+\) \| res: 9999/,
     event: '단말기 수신 불가 응답 (9999)',
+    status: 'failure',
+  },
+  {
+    pattern: /<RESPONSE>: \[T650P -> POS\] req: CARD_APPROVAL\(\d+\) \| res: 9959/,
+    event: '프린터 오류 (9959)',
+    status: 'warning',
+  },
+  {
+    pattern: /<RESPONSE>: \[T650P -> POS\] req: CARD_APPROVAL\(\d+\) \| res: 9989/,
+    event: '강제 취소 타임아웃 (9989)',
     status: 'failure',
   },
   {
@@ -105,6 +115,11 @@ const RULES: TerminalRule[] = [
 
   // 카드 리더
   {
+    pattern: /CardReaderPresenter: \[!\] FAIL \| ICC CARD READ \| code: (CX\d+)/,
+    event: (m) => `IC카드 리딩 실패 (${m[1]})`,
+    status: 'warning',
+  },
+  {
     pattern: /CardReaderPresenter: READ START \| mode: (\w+)/,
     event: (m) => `카드 리딩 시작 (${m[1]})`,
     status: 'info',
@@ -117,6 +132,13 @@ const RULES: TerminalRule[] = [
   {
     pattern: /CardReaderActivity: \[\*\] Block BackPressed \| payment ongoing/,
     event: '뒤로가기 차단 (결제 진행중)',
+    status: 'warning',
+  },
+
+  // 카드 리딩 취소
+  {
+    pattern: /<RESPONSE>: \[T650P -> POS\] req: AGENT_CARD_READING_CANCEL\(\d+\) \| res: 0000/,
+    event: '카드 리딩 취소 성공',
     status: 'warning',
   },
 
@@ -152,7 +174,26 @@ const RULES: TerminalRule[] = [
     status: 'info',
   },
 
-  // EOT (End of Transaction)
+  // VAN 통신 오류
+  {
+    pattern: /SocketTimeoutException/,
+    event: 'VAN 통신 타임아웃 (SocketTimeoutException)',
+    status: 'failure',
+  },
+
+  // 강제 취소
+  {
+    pattern: /CARD_FORCE_CANCEL/,
+    event: '강제 취소 요청',
+    status: 'warning',
+  },
+
+  // EOT (End of Transaction) — 구체적 패턴 먼저
+  {
+    pattern: /ResultActivity: \[!\] EOT ABNORMAL \| Print itself/,
+    event: 'EOT 비정상 + 단말기 자체 영수증 출력',
+    status: 'failure',
+  },
   {
     pattern: /ResultActivity: \[!\] EOT ABNORMAL/,
     event: 'EOT 비정상 종료 (결제 불일치 가능)',

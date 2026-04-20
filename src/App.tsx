@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react'
 import { LogInputSection } from './components/LogInput/LogInputSection'
+import { ConclusionBanner } from './components/ConclusionBanner'
 import { AnalysisSummary } from './components/AnalysisSummary'
+import { PaymentAttemptsSection } from './components/PaymentAttempts/PaymentAttemptsSection'
 import { TimelineSection } from './components/Timeline/TimelineSection'
 import { LogTableSection } from './components/LogTable/LogTableSection'
 import { parsePosLog } from './parser/posLogParser'
@@ -82,7 +84,9 @@ function App() {
 
       {!isLoading && result && result.entries.length > 0 && (
         <>
+          <ConclusionBanner result={result} />
           <AnalysisSummary result={result} />
+          <PaymentAttemptsSection result={result} />
           <TimelineSection result={result} />
           <LogTableSection result={result} />
         </>

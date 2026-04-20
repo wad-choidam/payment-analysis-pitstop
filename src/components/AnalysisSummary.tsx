@@ -22,10 +22,16 @@ export function AnalysisSummary({ result }: AnalysisSummaryProps) {
         <span className="bg-[#e94560] text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">2</span>
         <span className="font-bold">분석 요약</span>
       </div>
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap">
         <SummaryCard label="POS 유형" value={result.posType} color="#00d2ff" />
         <SummaryCard label="단말기" value={result.terminal} color="#00d2ff" />
         <SummaryCard label="불일치 유형" value={result.discrepancyType} color={discrepancyColor} />
+        <SummaryCard label="결제 시도" value={`${result.attempts?.length ?? '-'}회`} color="#ffd700" />
+        <SummaryCard
+          label="VAN 실 승인"
+          value={`${result.actualApprovalCount ?? '-'}건`}
+          color={result.isDuplicatePaymentSuspected ? '#e94560' : '#4ade80'}
+        />
         <SummaryCard
           label="ptxId"
           value={result.ptxId ? `${result.ptxId.slice(0, 18)}...` : '—'}

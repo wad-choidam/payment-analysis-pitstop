@@ -126,4 +126,56 @@ describe('parseTerminalLog', () => {
   it('returns empty for empty input', () => {
     expect(parseTerminalLog('')).toEqual([])
   })
+
+  it('detects IC card reading failure (CX01/CX06)', () => {
+    const log = `[1.0.127] 2025-09-28 14:29:50:100 CardReaderPresenter: [!] FAIL | ICC CARD READ | code: CX06
+[1.0.127] 2025-09-28 14:29:50:200 CardReaderPresenter: [!] FAIL | ICC CARD READ | code: CX01`
+    const entries = parseTerminalLog(log)
+    expect(entries).toHaveLength(2)
+    expect(entries[0].event).toBe('IC카드 리딩 실패 (CX06)')
+    expect(entries[0].status).toBe('warning')
+    expect(entries[1].event).toBe('IC카드 리딩 실패 (CX01)')
+  })
+
+  it('detects printer error (9959)', () => {
+    const log = `[1.0.127] 2025-09-24 19:25:10:000 <RESPONSE>: [T650P -> POS] req: CARD_APPROVAL(010010) | res: 9959`
+    const entries = parseTerminalLog(log)
+    expect(entries[0].event).toBe('프린터 오류 (9959)')
+    expect(entries[0].status).toBe('warning')
+  })
+
+  it('detects force cancel timeout (9989)', () => {
+    const log = `[1.0.127] 2025-12-15 17:20:08:000 <RESPONSE>: [T650P -> POS] req: CARD_APPROVAL(010010) | res: 9989`
+    const entries = parseTerminalLog(log)
+    expect(entries[0].event).toBe('강제 취소 타임아웃 (9989)')
+    expect(entries[0].status).toBe('failure')
+  })
+
+  it('detects SocketTimeoutException', () => {
+    const log = `[1.0.127] 2025-12-15 17:20:02:000 VanManager: SocketTimeoutException - connection timed out`
+    const entries = parseTerminalLog(log)
+    expect(entries[0].event).toBe('VAN 통신 타임아웃 (SocketTimeoutException)')
+    expect(entries[0].status).toBe('failure')
+  })
+
+  it('detects CARD_FORCE_CANCEL', () => {
+    const log = `[1.0.127] 2025-12-15 17:20:03:000 <REQUEST>: [T650P -> VAN] CARD_FORCE_CANCEL`
+    const entries = parseTerminalLog(log)
+    expect(entries[0].event).toBe('강제 취소 요청')
+    expect(entries[0].status).toBe('warning')
+  })
+
+  it('detects EOT ABNORMAL with Print itself (more specific)', () => {
+    const log = `[1.0.127] 2025-01-09 00:06:05:000 ResultActivity: [!] EOT ABNORMAL | Print itself`
+    const entries = parseTerminalLog(log)
+    expect(entries[0].event).toBe('EOT 비정상 + 단말기 자체 영수증 출력')
+    expect(entries[0].status).toBe('failure')
+  })
+
+  it('detects card reading cancel', () => {
+    const log = `[1.0.127] 2025-08-23 02:21:21:500 <RESPONSE>: [T650P -> POS] req: AGENT_CARD_READING_CANCEL(910021) | res: 0000`
+    const entries = parseTerminalLog(log)
+    expect(entries[0].event).toBe('카드 리딩 취소 성공')
+    expect(entries[0].status).toBe('warning')
+  })
 })

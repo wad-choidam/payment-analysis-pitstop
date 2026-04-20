@@ -17,7 +17,7 @@ export function LogTableSection({ result }: LogTableSectionProps) {
   return (
     <section className="p-6">
       <div className="flex items-center gap-2 mb-4">
-        <span className="bg-[#e94560] text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">4</span>
+        <span className="bg-[#e94560] text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">5</span>
         <span className="font-bold">상세 로그 테이블</span>
       </div>
 

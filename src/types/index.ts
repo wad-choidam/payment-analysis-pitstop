@@ -15,6 +15,21 @@ export interface LogEntry {
   ptxId?: string;
 }
 
+export type AttemptResult = 'success' | 'failure' | 'cancelled' | 'timeout' | 'unknown';
+
+export interface PaymentAttempt {
+  attemptNumber: number;
+  startIndex: number;
+  endIndex: number;
+  startTimestamp: string;
+  endTimestamp: string;
+  vanApprovalSent: boolean;
+  vanApprovalSuccess: boolean;
+  posReceivedSuccess: boolean;
+  result: AttemptResult;
+  resultDetail: string;
+}
+
 export interface AnalysisResult {
   posType: PosType;
   terminal: TerminalType;
@@ -22,4 +37,8 @@ export interface AnalysisResult {
   ptxId: string;
   entries: LogEntry[];
   errorPoints: number[];
+  attempts?: PaymentAttempt[];
+  conclusion?: string;
+  actualApprovalCount?: number;
+  isDuplicatePaymentSuspected?: boolean;
 }
