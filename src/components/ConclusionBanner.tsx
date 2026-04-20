@@ -68,7 +68,7 @@ export function ConclusionBanner({ result }: ConclusionBannerProps) {
                   onClick={handleCopy}
                   className="text-xs px-3 py-1.5 rounded-md border border-[#0f3460] text-gray-300 hover:border-[#00d2ff] hover:text-[#00d2ff] transition-colors cursor-pointer mb-3"
                 >
-                  {copied ? '복사 완료' : '분석 결과 복사'}
+                  분석 결과 복사
                 </button>
                 <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono max-h-96 overflow-auto">
                   {copyText}
@@ -78,6 +78,14 @@ export function ConclusionBanner({ result }: ConclusionBannerProps) {
           </div>
         </div>
       </div>
+      {copied && (
+        <div
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#16213e] border border-[#00d2ff] text-[#00d2ff] px-4 py-2.5 rounded-lg shadow-lg text-sm font-medium z-50 animate-fade-in-up pointer-events-none"
+          role="status"
+        >
+          복사가 완료되었습니다.
+        </div>
+      )}
     </section>
   )
 }
