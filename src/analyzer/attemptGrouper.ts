@@ -50,8 +50,13 @@ function generateResultDetail(entries: LogEntry[], result: AttemptResult): strin
   const hasSocketTimeout = events.some(e => e.includes('SocketTimeoutException'))
   const hasForceCancelTimeout = events.some(e => e.includes('강제 취소 타임아웃'))
 
+  const hasManualRegister = events.some(e => e.includes('임의등록'))
+  const hasDuplicateSuspect = events.some(e => e === '중복 결제 의심')
+
   if (result === 'cancelled') return '사용자 취소'
   if (result === 'timeout') return '타이머 만료로 접속 종료'
+  if (hasManualRegister) return '중복결제 의심 → 임의등록 처리'
+  if (hasDuplicateSuspect) return '중복결제 의심'
 
   if (hasSocketTimeout) return 'VAN 통신 타임아웃'
   if (hasForceCancelTimeout) return '강제 취소 타임아웃 (VAN 통신 불가)'

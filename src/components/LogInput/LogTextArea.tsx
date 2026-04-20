@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
+import { extractPosLogFromExcel, isExcelFile } from '../../parser/excelLogParser'
 
 interface LogTextAreaProps {
   label: string
@@ -11,11 +12,16 @@ export function LogTextArea({ label, value, onChange, placeholder }: LogTextArea
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    const file = e.dataTransfer.files[0]
-    if (file) {
+  const readFile = useCallback((file: File) => {
+    if (isExcelFile(file)) {
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        const buffer = ev.target?.result as ArrayBuffer
+        const log = extractPosLogFromExcel(buffer)
+        onChange(log)
+      }
+      reader.readAsArrayBuffer(file)
+    } else {
       const reader = new FileReader()
       reader.onload = (ev) => {
         onChange(ev.target?.result as string)
@@ -24,16 +30,17 @@ export function LogTextArea({ label, value, onChange, placeholder }: LogTextArea
     }
   }, [onChange])
 
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) readFile(file)
+  }, [readFile])
+
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (ev) => {
-        onChange(ev.target?.result as string)
-      }
-      reader.readAsText(file)
-    }
-  }, [onChange])
+    if (file) readFile(file)
+  }, [readFile])
 
   return (
     <div
@@ -56,7 +63,7 @@ export function LogTextArea({ label, value, onChange, placeholder }: LogTextArea
         <input
           ref={fileInputRef}
           type="file"
-          accept=".txt,.log"
+          accept=".txt,.log,.xlsx,.xls"
           onChange={handleFileSelect}
           className="hidden"
         />
