@@ -15,6 +15,12 @@ function App() {
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
+  const handleReset = useCallback(() => {
+    setPosLog('')
+    setTerminalLog('')
+    setResult(null)
+  }, [])
+
   const handleAnalyze = useCallback(() => {
     setResult(null)
     setIsLoading(true)
@@ -47,6 +53,7 @@ function App() {
         onPosLogChange={setPosLog}
         onTerminalLogChange={setTerminalLog}
         onAnalyze={handleAnalyze}
+        onReset={handleReset}
         isAnalyzable={isAnalyzable}
       />
 

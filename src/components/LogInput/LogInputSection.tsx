@@ -6,6 +6,7 @@ interface LogInputSectionProps {
   onPosLogChange: (value: string) => void
   onTerminalLogChange: (value: string) => void
   onAnalyze: () => void
+  onReset: () => void
   isAnalyzable: boolean
 }
 
@@ -15,6 +16,7 @@ export function LogInputSection({
   onPosLogChange,
   onTerminalLogChange,
   onAnalyze,
+  onReset,
   isAnalyzable,
 }: LogInputSectionProps) {
   return (
@@ -36,7 +38,7 @@ export function LogInputSection({
           onChange={onTerminalLogChange}
         />
       </div>
-      <div className="mt-4 text-center">
+      <div className="mt-4 flex items-center justify-center gap-3">
         <button
           type="button"
           onClick={onAnalyze}
@@ -44,6 +46,14 @@ export function LogInputSection({
           className="bg-[#e94560] text-white px-8 py-2 rounded-md font-bold text-sm hover:bg-[#d63d56] disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
           분석 시작
+        </button>
+        <button
+          type="button"
+          onClick={onReset}
+          disabled={!isAnalyzable}
+          className="bg-transparent border border-gray-600 text-gray-400 px-6 py-2 rounded-md text-sm hover:border-gray-400 hover:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+        >
+          초기화
         </button>
       </div>
     </section>
