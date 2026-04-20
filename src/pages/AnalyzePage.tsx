@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { LogInputSection } from '../components/LogInput/LogInputSection'
 import { ConclusionBanner } from '../components/ConclusionBanner'
 import { AnalysisSummary } from '../components/AnalysisSummary'
@@ -43,6 +44,16 @@ export function AnalyzePage() {
 
   return (
     <>
+      {!isLoading && !result && (
+        <Link
+          to="/guide"
+          className="flex items-center gap-2 bg-[#0f3460] border-b border-[#0f3460] px-6 py-3 text-sm text-gray-300 hover:text-[#00d2ff] hover:bg-[#162a50] transition-colors"
+        >
+          <span>📖</span>
+          <span>결제 불일치 분석이 처음이라면 <span className="underline font-bold text-[#00d2ff]">가이드</span>를 확인하세요</span>
+        </Link>
+      )}
+
       <LogInputSection
         posLog={posLog}
         terminalLog={terminalLog}
