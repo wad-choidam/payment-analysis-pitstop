@@ -16,17 +16,40 @@ function detectTerminal(entries: LogEntry[]): TerminalType {
 }
 
 function detectDiscrepancyType(entries: LogEntry[]): string {
-  for (const entry of entries) {
-    if (entry.event.includes('타이머 만료')) return '타이머 만료'
-    if (entry.event.includes('중단 실패')) return '연결 끊김'
-    if (entry.event.includes('단말기 수신 불가')) return '단말기 수신 불가'
-    if (entry.event.includes('충전독')) return '충전독 접촉'
-    if (entry.event.includes('중복 결제')) return '중복 결제 의심'
+  const events = entries.map(e => e.event)
+
+  // 우선순위 순으로 체크
+  if (events.some(e => e.includes('동기화 실패'))) return 'PtxID 불일치 (동기화 실패)'
+  if (events.some(e => e.includes('EOT 비정상'))) return '결제 불일치 (EOT 비정상)'
+  if (events.some(e => e.includes('타이머 만료'))) return '타이머 만료'
+  if (events.some(e => e.includes('중단 실패') || e.includes('승인 중단 실패'))) return '연결 끊김 (중단 실패)'
+  if (events.some(e => e.includes('단말기 수신 불가'))) return '단말기 수신 불가 (9999)'
+  if (events.some(e => e.includes('트랜잭션 스킵'))) return '단말기 사용 불가'
+  if (events.some(e => e.includes('충전독 분리'))) return '충전독 분리'
+  if (events.some(e => e.includes('충전독'))) return '충전독 접촉'
+  if (events.some(e => e.includes('접속 타임아웃') || e.includes('Attempt to connect to host timed out'))) return '접속 타임아웃'
+  if (events.some(e => e === '중복 결제 의심')) return '중복 결제 의심'
+  if (events.some(e => e.includes('중복결제 확인 응답실패'))) return '중복결제 확인 응답실패'
+  if (events.some(e => e.includes('마지막 승인 응답실패'))) return '마지막 승인 응답실패'
+
+  // 최종결론에서 추출
+  const conclusion = entries.find(e => e.event.startsWith('최종결론:'))
+  if (conclusion) {
+    const reason = conclusion.event.replace('최종결론: ', '')
+    if (reason.includes('사용자 취소')) return '사용자 취소'
+    if (reason.includes('접속 실패')) return '접속 실패'
+    if (reason.includes('단말기가 수신 가능한 상태가 아님')) return '단말기 수신 불가'
+    return reason
   }
+
   return '알 수 없음'
 }
 
 function findPtxId(entries: LogEntry[]): string {
+  // 승인 요청의 ptxId를 우선 반환 (직전거래 응답이 아닌)
+  for (const entry of entries) {
+    if (entry.ptxId && entry.event === '승인 요청') return entry.ptxId
+  }
   for (const entry of entries) {
     if (entry.ptxId) return entry.ptxId
   }

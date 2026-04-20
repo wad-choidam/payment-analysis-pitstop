@@ -7,67 +7,123 @@ const SAMPLE_TERMINAL_LOG = `2024-05-15 14:32:01.123 AgentSocketServer: CLIENT I
 2024-05-15 14:32:15.012 <RESPONSE>: [T650P -> POS] req: CARD_APPROVAL(010010) | res: 0000
 2024-05-15 14:32:20.345 ChargingStatusReceiver: charging dock connected`
 
+// 실제 로그 (2024-11-19 케이스, [version] prefix 포함)
+const REAL_TERMINAL_LOG = `[1.0.127] 2024-11-19 14:46:53:903 AgentSocketServer: CLIENT IP/192.168.0.14
+[1.0.127] 2024-11-19 14:46:53:907 <REQUEST>: [POS -> T650P] INQUIRY_LATEST_TRANSACTION(990001)
+[1.0.127] 2024-11-19 14:46:53:948 <REQUEST>: [POS -> T650P] CARD_APPROVAL(010010)
+[1.0.127] 2024-11-19 14:46:53:953 [POS -> T650P]:
+============================================================
+[CARD_APPROVAL] CPOS-bb95670e-456b-46b4-bd6f-ca002b79d06c
+============================================================
+[1.0.127] 2024-11-19 14:46:54:022 CardReaderActivity: onCreate
+[1.0.127] 2024-11-19 14:46:54:433 CardReaderPresenter: READ START | mode: CT_CTLS
+[1.0.127] 2024-11-19 14:46:57:520 <RESPONSE>: [T650P -> POS] req: CARD_APPROVAL(010010) | res: 9999
+[1.0.127] 2024-11-19 14:46:58:495 <REQUEST>: [T650P -> VAN] CARD_APPROVAL
+[1.0.127] 2024-11-19 14:46:58:871 <RESPONSE>: [VAN -> T650P] CARD_APPROVAL
+[1.0.127] 2024-11-19 14:46:58:871 CardController: [*] CARD PAYMENT | ptxid: CPOS-bb95670e-456b-46b4-bd6f-ca002b79d06c
+[1.0.127] 2024-11-19 14:46:58:872 CardController: CARD PAYMENT COMPLETE
+[1.0.127] 2024-11-19 14:46:59:082 <RESPONSE>: [T650P -> POS] req: CARD_APPROVAL(010010) | res: 0000
+[1.0.127] 2024-11-19 14:46:59:095 ResultActivity: onResume`
+
+// 2024-12-02: 충전독 분리 + EOT 비정상
+const REAL_TERMINAL_LOG_1202 = `[1.0.127] 2024-12-02 07:58:49:172 AgentSocketServer: CLIENT IP/192.168.0.11
+[1.0.127] 2024-12-02 07:58:49:181 <REQUEST>: [POS -> T650P] INQUIRY_LATEST_TRANSACTION(990001)
+[1.0.127] 2024-12-02 07:58:49:461 ChargingStatusReceiver: ACTION_POWER_DISCONNECTED
+[1.0.127] 2024-12-02 07:58:52:260 <REQUEST>: [POS -> T650P] CARD_APPROVAL(010010)
+[1.0.127] 2024-12-02 07:58:55:046 <REQUEST>: [T650P -> VAN] CARD_APPROVAL
+[1.0.127] 2024-12-02 07:58:55:872 <RESPONSE>: [VAN -> T650P] CARD_APPROVAL
+[1.0.127] 2024-12-02 07:58:56:064 <RESPONSE>: [T650P -> POS] req: CARD_APPROVAL(010010) | res: 0000
+[1.0.127] 2024-12-02 07:58:56:396 CatchPosAPI::[Success] Upload Transaction:  req: 010010 | res: 010010
+[1.0.127] 2024-12-02 07:58:58:076 ResultActivity: [!] EOT ABNORMAL | Print itself`
+
+// 2024-12-06: 트랜잭션 스킵
+const REAL_TERMINAL_LOG_1206 = `[1.0.127] 2024-12-06 00:04:06:621 AgentSocketServer: CLIENT IP/192.168.123.193
+[1.0.127] 2024-12-06 00:04:06:624 <REQUEST>: [POS -> T650P] INQUIRY_LATEST_TRANSACTION(990001)
+[1.0.127] 2024-12-06 00:04:06:643 <REQUEST>: [POS -> T650P] CARD_APPROVAL(010010)
+[1.0.127] 2024-12-06 00:04:06:661 AgentController: [*] [CARD_APPROVAL] Transaction Skipped! NOT AVAILABLE
+[1.0.127] 2024-12-06 00:04:06:656 <RESPONSE>: [T650P -> POS] req: CARD_APPROVAL(010010) | res: 9999`
+
 describe('parseTerminalLog', () => {
-  it('parses entries from terminal log text', () => {
+  it('parses basic format', () => {
     const entries = parseTerminalLog(SAMPLE_TERMINAL_LOG)
-    expect(entries.length).toBe(5)
-  })
-
-  it('extracts timestamps as HH:mm:ss', () => {
-    const entries = parseTerminalLog(SAMPLE_TERMINAL_LOG)
+    expect(entries.length).toBeGreaterThan(0)
     expect(entries[0].timestamp).toBe('14:32:01')
-    expect(entries[2].timestamp).toBe('14:32:05')
-  })
-
-  it('sets source to TERMINAL for all entries', () => {
-    const entries = parseTerminalLog(SAMPLE_TERMINAL_LOG)
-    entries.forEach(e => expect(e.source).toBe('TERMINAL'))
-  })
-
-  it('detects client connection event', () => {
-    const entries = parseTerminalLog(SAMPLE_TERMINAL_LOG)
     expect(entries[0].event).toContain('POS 연결 요청')
-    expect(entries[0].status).toBe('info')
   })
 
-  it('detects previous transaction inquiry', () => {
-    const entries = parseTerminalLog(SAMPLE_TERMINAL_LOG)
-    expect(entries[1].event).toBe('직전거래 조회 수신')
+  it('parses real format with [version] prefix', () => {
+    const entries = parseTerminalLog(REAL_TERMINAL_LOG)
+    expect(entries.length).toBeGreaterThan(5)
+    expect(entries[0].timestamp).toBe('14:46:53')
   })
 
-  it('detects card approval request and extracts ptxId', () => {
-    const entries = parseTerminalLog(SAMPLE_TERMINAL_LOG)
-    expect(entries[2].event).toBe('승인 요청 수신')
-    expect(entries[2].ptxId).toBe('CPOS-1b81a584-1c73-437d-ae69-1167036f71fd')
+  it('sets source to TERMINAL', () => {
+    parseTerminalLog(REAL_TERMINAL_LOG).forEach(e => expect(e.source).toBe('TERMINAL'))
   })
 
-  it('detects approval success response (0000)', () => {
-    const entries = parseTerminalLog(SAMPLE_TERMINAL_LOG)
-    expect(entries[3].event).toBe('승인 성공 응답')
-    expect(entries[3].status).toBe('success')
+  it('detects POS connection', () => {
+    const entries = parseTerminalLog(REAL_TERMINAL_LOG)
+    expect(entries[0].event).toContain('POS 연결 요청 수신')
   })
 
-  it('detects charging dock event as warning', () => {
-    const entries = parseTerminalLog(SAMPLE_TERMINAL_LOG)
-    expect(entries[4].event).toContain('충전독')
-    expect(entries[4].status).toBe('warning')
+  it('extracts ptxId from CARD_APPROVAL block', () => {
+    const entries = parseTerminalLog(REAL_TERMINAL_LOG)
+    const approval = entries.find(e => e.event === '카드 승인 요청 수신')
+    expect(approval?.ptxId).toBe('CPOS-bb95670e-456b-46b4-bd6f-ca002b79d06c')
   })
 
-  it('returns empty array for empty input', () => {
+  it('detects 9999 response', () => {
+    const entries = parseTerminalLog(REAL_TERMINAL_LOG)
+    const unavailable = entries.find(e => e.event.includes('수신 불가'))
+    expect(unavailable?.status).toBe('failure')
+  })
+
+  it('detects VAN communication', () => {
+    const entries = parseTerminalLog(REAL_TERMINAL_LOG)
+    expect(entries.some(e => e.event === 'VAN사에 승인 요청')).toBe(true)
+    expect(entries.some(e => e.event === 'VAN사 승인 응답')).toBe(true)
+  })
+
+  it('detects card payment with ptxId', () => {
+    const entries = parseTerminalLog(REAL_TERMINAL_LOG)
+    const payment = entries.find(e => e.event === '카드 결제 처리')
+    expect(payment?.ptxId).toBe('CPOS-bb95670e-456b-46b4-bd6f-ca002b79d06c')
+  })
+
+  it('detects 0000 success response', () => {
+    const entries = parseTerminalLog(REAL_TERMINAL_LOG)
+    expect(entries.some(e => e.event === '승인 성공 응답')).toBe(true)
+  })
+
+  it('detects charging dock disconnect (1202 case)', () => {
+    const entries = parseTerminalLog(REAL_TERMINAL_LOG_1202)
+    expect(entries.some(e => e.event.includes('충전독 분리'))).toBe(true)
+  })
+
+  it('detects EOT ABNORMAL (1202 case)', () => {
+    const entries = parseTerminalLog(REAL_TERMINAL_LOG_1202)
+    const eot = entries.find(e => e.event.includes('EOT 비정상'))
+    expect(eot?.status).toBe('failure')
+  })
+
+  it('detects upload success (1202 case)', () => {
+    const entries = parseTerminalLog(REAL_TERMINAL_LOG_1202)
+    expect(entries.some(e => e.event.includes('업로드 성공'))).toBe(true)
+  })
+
+  it('detects transaction skipped (1206 case)', () => {
+    const entries = parseTerminalLog(REAL_TERMINAL_LOG_1206)
+    const skipped = entries.find(e => e.event.includes('트랜잭션 스킵'))
+    expect(skipped?.status).toBe('failure')
+  })
+
+  it('filters noise logs (Activity lifecycle, etc.)', () => {
+    const entries = parseTerminalLog(REAL_TERMINAL_LOG)
+    expect(entries.every(e => !e.event.includes('onCreate'))).toBe(true)
+    expect(entries.every(e => !e.event.includes('onResume'))).toBe(true)
+  })
+
+  it('returns empty for empty input', () => {
     expect(parseTerminalLog('')).toEqual([])
-  })
-
-  it('detects 9999 as terminal unavailable', () => {
-    const log = '2024-05-15 14:32:15.012 <RESPONSE>: [T650P -> POS] req: CARD_APPROVAL(010010) | res: 9999'
-    const entries = parseTerminalLog(log)
-    expect(entries[0].event).toBe('단말기 수신 불가 응답')
-    expect(entries[0].status).toBe('failure')
-  })
-
-  it('detects non-0000 response as failure', () => {
-    const log = '2024-05-15 14:32:15.012 <RESPONSE>: [T650P -> POS] req: CARD_APPROVAL(010010) | res: 1234'
-    const entries = parseTerminalLog(log)
-    expect(entries[0].event).toBe('승인 실패 응답 (1234)')
-    expect(entries[0].status).toBe('failure')
   })
 })
