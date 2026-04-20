@@ -16,11 +16,16 @@ function isBoundaryEvent(entry: LogEntry): boolean {
 function hasPosApprovalSuccess(entries: LogEntry[]): boolean {
   const approvalIdx = entries.findIndex(e => e.event === '승인 요청')
   if (approvalIdx < 0) return false
-  return entries.some((e, i) =>
-    e.source === 'POS' && i > approvalIdx
-    && (e.event === '승인 성공' || e.event === '승인 수신 확인 응답'
-      || (e.event.startsWith('직전거래 응답') && e.status === 'success')),
-  )
+  const approvalPtxId = entries[approvalIdx].ptxId
+  return entries.some((e, i) => {
+    if (e.source !== 'POS' || i <= approvalIdx) return false
+    if (e.event === '승인 성공' || e.event === '승인 수신 확인 응답') return true
+    if (e.event.startsWith('직전거래 응답') && e.status === 'success') {
+      // 직전거래 응답은 과거 거래에 대한 응답일 수 있으므로 ptxId가 현재 승인 요청과 일치할 때만 실 승인으로 간주
+      return !!approvalPtxId && e.ptxId === approvalPtxId
+    }
+    return false
+  })
 }
 
 function determineResult(entries: LogEntry[]): AttemptResult {

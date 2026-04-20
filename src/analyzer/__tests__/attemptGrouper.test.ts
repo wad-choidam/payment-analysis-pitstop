@@ -119,6 +119,34 @@ describe('groupPaymentAttempts', () => {
     expect(attempts[1].attemptNumber).toBe(2)
   })
 
+  it('does not count old 직전거래 응답 as approval success when ptxId differs', () => {
+    // 실제 사례 (미무 1274840): 사용자 취소 후 재조회된 직전거래 응답이 과거 ptxId로 돌아옴
+    const entries: LogEntry[] = [
+      entry({ timestamp: '12:05:40', event: '단말기 연결 요청' }),
+      entry({ timestamp: '12:05:40', event: '직전거래 조회 요청' }),
+      entry({ timestamp: '12:05:40', event: '직전거래 응답 (성공)', status: 'success', ptxId: 'BPOS-OLD' }),
+      entry({ timestamp: '12:05:40', event: '승인 요청', ptxId: 'BPOS-NEW' }),
+      entry({ timestamp: '12:05:45', event: '승인 중단 요청 전송', status: 'warning' }),
+      entry({ timestamp: '12:05:45', event: '중단 성공', status: 'success' }),
+      // 취소 후 재조회된 직전거래 응답 — ptxId는 이전 성공 거래의 것
+      entry({ timestamp: '12:05:45', event: '직전거래 응답 (성공)', status: 'success', ptxId: 'BPOS-OLD' }),
+    ]
+    const attempts = groupPaymentAttempts(entries)
+    expect(attempts[0].result).toBe('cancelled')
+    expect(attempts[0].posReceivedSuccess).toBe(false)
+    expect(attempts[0].vanApprovalSuccess).toBe(false)
+  })
+
+  it('counts 직전거래 응답 (성공) as approval success when ptxId matches', () => {
+    const entries: LogEntry[] = [
+      entry({ timestamp: '14:27:15', event: '단말기 연결 요청' }),
+      entry({ timestamp: '14:27:17', event: '승인 요청', ptxId: 'BPOS-SAME' }),
+      entry({ timestamp: '14:27:20', event: '직전거래 응답 (성공)', status: 'success', ptxId: 'BPOS-SAME' }),
+    ]
+    const attempts = groupPaymentAttempts(entries)
+    expect(attempts[0].posReceivedSuccess).toBe(true)
+  })
+
   it('classic discrepancy: 3 attempts, only last succeeds', () => {
     const entries: LogEntry[] = [
       // 1차: 9999
