@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { LogInputSection } from '../components/LogInput/LogInputSection'
 import { ConclusionBanner } from '../components/ConclusionBanner'
 import { AnalysisSummary } from '../components/AnalysisSummary'
@@ -57,31 +56,22 @@ export function AnalyzePage() {
   return (
     <>
       {!isLoading && !result && (
-        <>
-          <Link
-            to="/guide"
-            className="flex items-center gap-2 border-b border-[#0f3460] px-6 py-3 text-sm text-gray-300 hover:text-[#00d2ff] hover:bg-[#162a50] transition-colors animate-guide-pulse"
-          >
-            <span>📖</span>
-            <span>결제 불일치 분석이 처음이라면 <span className="underline font-bold text-[#00d2ff]">가이드</span>를 확인하세요</span>
-          </Link>
-          <div className="border-b border-[#0f3460] px-6 py-4 bg-gradient-to-r from-[#16213e] via-[#1a2d5c] to-[#16213e]">
-            <div className="flex items-center gap-4 flex-wrap">
-              <button
-                type="button"
-                onClick={handleLoadSample}
-                disabled={sampleLoaded}
-                className="text-sm font-bold px-5 py-2 rounded-md bg-[#00d2ff] text-[#0a0a1a] hover:bg-[#00b8e6] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-lg shadow-[#00d2ff]/20 hover:shadow-[#00d2ff]/40 hover:scale-105 active:scale-100 shrink-0"
-              >
-                {sampleLoaded ? '✓ 예시 로그 불러옴' : '✨ 예시로 분석해보기 →'}
-              </button>
-              <div>
-                <div className="text-sm font-bold text-white">처음이시라면 예시 로그로 체험해보세요</div>
-                <div className="text-xs text-gray-400 mt-0.5">실제 분석 사례(미무 1274840)를 한 번에 불러옵니다</div>
-              </div>
+        <div className="border-b border-[#0f3460] px-6 py-4 bg-gradient-to-r from-[#16213e] via-[#1a2d5c] to-[#16213e]">
+          <div className="flex items-center gap-4 flex-wrap">
+            <button
+              type="button"
+              onClick={handleLoadSample}
+              disabled={sampleLoaded}
+              className="text-sm font-bold px-5 py-2 rounded-md bg-[#00d2ff] text-[#0a0a1a] hover:bg-[#00b8e6] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-lg shadow-[#00d2ff]/20 hover:shadow-[#00d2ff]/40 hover:scale-105 active:scale-100 shrink-0"
+            >
+              {sampleLoaded ? '✓ 예시 로그 불러옴' : '✨ 예시로 분석해보기 →'}
+            </button>
+            <div>
+              <div className="text-sm font-bold text-white">처음이시라면 예시 로그로 체험해보세요</div>
+              <div className="text-xs text-gray-400 mt-0.5">실제 분석 사례(미무 1274840)를 한 번에 불러옵니다</div>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       <LogInputSection
