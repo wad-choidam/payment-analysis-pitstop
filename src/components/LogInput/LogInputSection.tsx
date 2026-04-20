@@ -5,6 +5,7 @@ interface LogInputSectionProps {
   terminalLog: string
   onPosLogChange: (value: string) => void
   onTerminalLogChange: (value: string) => void
+  onServiceTypeDetected?: (serviceType: string) => void
   onAnalyze: () => void
   onReset: () => void
   isAnalyzable: boolean
@@ -15,6 +16,7 @@ export function LogInputSection({
   terminalLog,
   onPosLogChange,
   onTerminalLogChange,
+  onServiceTypeDetected,
   onAnalyze,
   onReset,
   isAnalyzable,
@@ -31,6 +33,7 @@ export function LogInputSection({
           label="📋 포스 로그 (POS Log)"
           value={posLog}
           onChange={onPosLogChange}
+          onServiceTypeDetected={onServiceTypeDetected}
           placeholder="엑셀(.xlsx) 파일을 드래그하거나 텍스트를 붙여넣으세요..."
         />
         <LogTextArea

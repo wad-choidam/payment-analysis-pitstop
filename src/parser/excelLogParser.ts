@@ -1,22 +1,32 @@
 import { read, utils } from 'xlsx'
 
+export interface ExcelParseResult {
+  posLog: string;
+  serviceType?: string; // 'BPOS' | 'CPOS' 등
+}
+
 /**
- * CPOS 결제 불일치 엑셀 파일에서 detailLog를 추출한다.
+ * 결제 불일치 엑셀 파일에서 detailLog와 serviceType을 추출한다.
  *
  * 엑셀 구조:
  *   시트 "이벤트 로그"
- *   컬럼: regDateTime, eventName, ..., raw (JSON)
+ *   컬럼: regDateTime, eventName, serviceType, ..., raw (JSON)
  *   raw 안의 detailLog 필드가 포스 로그
  */
-export function extractPosLogFromExcel(buffer: ArrayBuffer): string {
+export function extractPosLogFromExcel(buffer: ArrayBuffer): ExcelParseResult {
   const wb = read(buffer, { type: 'array' })
   const ws = wb.Sheets[wb.SheetNames[0]]
-  if (!ws) return ''
+  if (!ws) return { posLog: '' }
 
   const rows = utils.sheet_to_json<Record<string, string>>(ws)
   const detailLogs: string[] = []
+  let serviceType: string | undefined
 
   for (const row of rows) {
+    if (!serviceType) {
+      serviceType = row['serviceType'] ?? row['ServiceType']
+    }
+
     const rawStr = row['raw'] ?? row['Raw'] ?? ''
     if (!rawStr) continue
 
@@ -33,8 +43,10 @@ export function extractPosLogFromExcel(buffer: ArrayBuffer): string {
     }
   }
 
-  // 여러 행의 detailLog를 줄바꿈으로 합침
-  return detailLogs.join('\n')
+  return {
+    posLog: detailLogs.join('\n'),
+    serviceType,
+  }
 }
 
 export function isExcelFile(file: File): boolean {

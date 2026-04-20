@@ -24,8 +24,8 @@ describe('extractPosLogFromExcel', () => {
     ]
     const buffer = createTestExcel(rows)
     const result = extractPosLogFromExcel(buffer)
-    expect(result).toContain('[전송] 승인 접속 시도')
-    expect(result).toContain('[수신] 단말기 접속 성공')
+    expect(result.posLog).toContain('[전송] 승인 접속 시도')
+    expect(result.posLog).toContain('[수신] 단말기 접속 성공')
   })
 
   it('concatenates multiple rows', () => {
@@ -35,13 +35,14 @@ describe('extractPosLogFromExcel', () => {
     ]
     const buffer = createTestExcel(rows)
     const result = extractPosLogFromExcel(buffer)
-    expect(result).toContain('18:19:30')
-    expect(result).toContain('18:19:43')
+    expect(result.posLog).toContain('18:19:30')
+    expect(result.posLog).toContain('18:19:43')
   })
 
   it('returns empty for empty workbook', () => {
     const buffer = createTestExcel([])
-    expect(extractPosLogFromExcel(buffer)).toBe('')
+    const result = extractPosLogFromExcel(buffer)
+    expect(result.posLog).toBe('')
   })
 
   it('skips rows with invalid JSON in raw column', () => {
@@ -51,7 +52,19 @@ describe('extractPosLogFromExcel', () => {
     ]
     const buffer = createTestExcel(rows)
     const result = extractPosLogFromExcel(buffer)
-    expect(result).toContain('승인 접속 시도')
+    expect(result.posLog).toContain('승인 접속 시도')
+  })
+
+  it('extracts serviceType from rows', () => {
+    const rows = [
+      {
+        serviceType: 'BPOS',
+        raw: JSON.stringify({ raw: { detailLog: '#19:55:34.143 [전송] 승인 접속 시도' } }),
+      },
+    ]
+    const buffer = createTestExcel(rows)
+    const result = extractPosLogFromExcel(buffer)
+    expect(result.serviceType).toBe('BPOS')
   })
 })
 

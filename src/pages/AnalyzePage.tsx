@@ -14,12 +14,14 @@ import type { AnalysisResult } from '../types'
 export function AnalyzePage() {
   const [posLog, setPosLog] = useState('')
   const [terminalLog, setTerminalLog] = useState('')
+  const [serviceType, setServiceType] = useState<string | undefined>()
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
   const handleReset = useCallback(() => {
     setPosLog('')
     setTerminalLog('')
+    setServiceType(undefined)
     setResult(null)
   }, [])
 
@@ -31,11 +33,11 @@ export function AnalyzePage() {
       const posEntries = parsePosLog(posLog)
       const terminalEntries = parseTerminalLog(terminalLog)
       const merged = mergeLogEntries(posEntries, terminalEntries)
-      const analysis = analyzeDiscrepancy(merged)
+      const analysis = analyzeDiscrepancy(merged, { posTypeHint: serviceType })
       setResult(analysis)
       setIsLoading(false)
     }, 400)
-  }, [posLog, terminalLog])
+  }, [posLog, terminalLog, serviceType])
 
   const isAnalyzable = posLog.trim().length > 0 || terminalLog.trim().length > 0
 
@@ -46,6 +48,7 @@ export function AnalyzePage() {
         terminalLog={terminalLog}
         onPosLogChange={setPosLog}
         onTerminalLogChange={setTerminalLog}
+        onServiceTypeDetected={setServiceType}
         onAnalyze={handleAnalyze}
         onReset={handleReset}
         isAnalyzable={isAnalyzable}

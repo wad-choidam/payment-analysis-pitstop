@@ -2,18 +2,22 @@ import type { AnalysisResult, LogEntry, PosType, TerminalType } from '../types'
 import { groupPaymentAttempts } from './attemptGrouper'
 import { generateConclusion } from './conclusionGenerator'
 
-function detectPosType(entries: LogEntry[]): PosType {
+function detectPosType(entries: LogEntry[], posTypeHint?: string): PosType {
   for (const entry of entries) {
     if (entry.ptxId?.startsWith('BPOS-')) return 'BPOS'
     if (entry.ptxId?.startsWith('CPOS-')) return 'CPOS'
   }
+  if (posTypeHint === 'BPOS') return 'BPOS'
+  if (posTypeHint === 'CPOS') return 'CPOS'
   return 'UNKNOWN'
 }
 
-function detectTerminal(entries: LogEntry[]): TerminalType {
+function detectTerminal(entries: LogEntry[], posTypeHint?: string): TerminalType {
   for (const entry of entries) {
     if (entry.rawLog.includes('T650P') || entry.source === 'TERMINAL') return 'Eximbay'
   }
+  // 엑셀에서 serviceType이 있으면 결제 불일치 알림 대상 = Eximbay 단말기
+  if (posTypeHint === 'BPOS' || posTypeHint === 'CPOS') return 'Eximbay'
   return 'UNKNOWN'
 }
 
@@ -64,7 +68,11 @@ function findErrorPoints(entries: LogEntry[]): number[] {
     .filter(i => i !== -1)
 }
 
-export function analyzeDiscrepancy(entries: LogEntry[]): AnalysisResult {
+export interface AnalyzeOptions {
+  posTypeHint?: string;
+}
+
+export function analyzeDiscrepancy(entries: LogEntry[], options?: AnalyzeOptions): AnalysisResult {
   const attempts = groupPaymentAttempts(entries)
   const generated = generateConclusion(attempts)
   const hasTerminalLog = entries.some(e => e.source === 'TERMINAL')
@@ -75,8 +83,8 @@ export function analyzeDiscrepancy(entries: LogEntry[]): AnalysisResult {
   }
 
   return {
-    posType: detectPosType(entries),
-    terminal: detectTerminal(entries),
+    posType: detectPosType(entries, options?.posTypeHint),
+    terminal: detectTerminal(entries, options?.posTypeHint),
     discrepancyType: detectDiscrepancyType(entries),
     ptxId: findPtxId(entries),
     entries,

@@ -5,11 +5,12 @@ interface LogTextAreaProps {
   label: string
   value: string
   onChange: (value: string) => void
+  onServiceTypeDetected?: (serviceType: string) => void
   placeholder?: string
   showFileUpload?: boolean
 }
 
-export function LogTextArea({ label, value, onChange, placeholder, showFileUpload = true }: LogTextAreaProps) {
+export function LogTextArea({ label, value, onChange, onServiceTypeDetected, placeholder, showFileUpload = true }: LogTextAreaProps) {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -18,8 +19,11 @@ export function LogTextArea({ label, value, onChange, placeholder, showFileUploa
       const reader = new FileReader()
       reader.onload = (ev) => {
         const buffer = ev.target?.result as ArrayBuffer
-        const log = extractPosLogFromExcel(buffer)
-        onChange(log)
+        const result = extractPosLogFromExcel(buffer)
+        onChange(result.posLog)
+        if (result.serviceType && onServiceTypeDetected) {
+          onServiceTypeDetected(result.serviceType)
+        }
       }
       reader.readAsArrayBuffer(file)
     } else {
@@ -29,7 +33,7 @@ export function LogTextArea({ label, value, onChange, placeholder, showFileUploa
       }
       reader.readAsText(file)
     }
-  }, [onChange])
+  }, [onChange, onServiceTypeDetected])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
