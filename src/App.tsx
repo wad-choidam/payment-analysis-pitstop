@@ -1,6 +1,8 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { AnalyzePage } from './pages/AnalyzePage'
 import { GuidePage } from './pages/GuidePage'
+import { NotFoundPage } from './pages/NotFoundPage'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 function App() {
   const location = useLocation()
@@ -24,10 +26,13 @@ function App() {
         </div>
       </header>
 
-      <Routes>
-        <Route path="/" element={<AnalyzePage />} />
-        <Route path="/guide" element={<GuidePage />} />
-      </Routes>
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<AnalyzePage />} />
+          <Route path="/guide" element={<GuidePage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </ErrorBoundary>
     </div>
   )
 }
