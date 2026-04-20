@@ -13,6 +13,16 @@ function isBoundaryEvent(entry: LogEntry): boolean {
   return BOUNDARY_PATTERNS.some(p => p.test(entry.event))
 }
 
+function hasPosApprovalSuccess(entries: LogEntry[]): boolean {
+  const approvalIdx = entries.findIndex(e => e.event === '승인 요청')
+  if (approvalIdx < 0) return false
+  return entries.some((e, i) =>
+    e.source === 'POS' && i > approvalIdx
+    && (e.event === '승인 성공' || e.event === '승인 수신 확인 응답'
+      || (e.event.startsWith('직전거래 응답') && e.status === 'success')),
+  )
+}
+
 function determineResult(entries: LogEntry[]): AttemptResult {
   const events = entries.map(e => e.event)
 
@@ -22,10 +32,8 @@ function determineResult(entries: LogEntry[]): AttemptResult {
   // 타이머 만료
   if (events.some(e => e.includes('타이머 만료'))) return 'timeout'
 
-  // POS 측에서 성공 수신 확인
-  if (entries.some(e => e.source === 'POS' && (e.event === '승인 성공' || e.event === '승인 수신 확인 응답'))) {
-    return 'success'
-  }
+  // POS 측에서 승인 요청 이후 성공 수신
+  if (hasPosApprovalSuccess(entries)) return 'success'
 
   // 단말기 측 0000 응답 (POS 미수신이어도 VAN 승인은 됨)
   if (events.some(e => e === '승인 성공 응답')) return 'success'
@@ -40,9 +48,9 @@ function generateResultDetail(entries: LogEntry[], result: AttemptResult): strin
   const events = entries.map(e => e.event)
   const vanSent = events.some(e => e === 'VAN사에 승인 요청')
   const vanSuccess = events.some(e => e === '승인 성공 응답')
-  const posReceived = entries.some(e =>
-    e.source === 'POS' && (e.event === '승인 성공' || e.event === '승인 수신 확인 응답'),
-  )
+  const posReceived = hasPosApprovalSuccess(entries)
+  const hasTerminal = entries.some(e => e.source === 'TERMINAL')
+  const approvalSuccess = vanSuccess || (!hasTerminal && posReceived)
   const has9999 = events.some(e => e.includes('단말기 수신 불가'))
   const hasCxFail = events.some(e => e.includes('IC카드 리딩 실패'))
   const hasPrinterError = events.some(e => e.includes('프린터 오류'))
@@ -61,7 +69,7 @@ function generateResultDetail(entries: LogEntry[], result: AttemptResult): strin
   if (hasSocketTimeout) return 'VAN 통신 타임아웃'
   if (hasForceCancelTimeout) return '강제 취소 타임아웃 (VAN 통신 불가)'
 
-  if (vanSuccess && posReceived) return 'VAN 승인 완료, POS 정상 수신'
+  if (approvalSuccess && posReceived) return '승인 완료, POS 정상 수신'
   if (vanSuccess && !posReceived && hasEotPrint) return 'VAN 승인 완료, POS 미수신 → 단말기 자체 영수증 출력'
   if (vanSuccess && !posReceived) return 'VAN 승인 완료, POS 미수신 (단말기 단독 결제)'
   if (vanSent && !vanSuccess) return 'VAN 승인 요청 후 응답 없음'
@@ -83,9 +91,10 @@ function buildAttempt(
   const events = entries.map(e => e.event)
   const vanApprovalSent = events.some(e => e === 'VAN사에 승인 요청')
   const vanApprovalSuccess = events.some(e => e === '승인 성공 응답')
-  const posReceivedSuccess = entries.some(e =>
-    e.source === 'POS' && (e.event === '승인 성공' || e.event === '승인 수신 확인 응답'),
-  )
+  const posReceivedSuccess = hasPosApprovalSuccess(entries)
+  const hasTerminalLog = entries.some(e => e.source === 'TERMINAL')
+  // 단말기 로그가 없으면 POS 측 승인 성공을 VAN 승인 성공으로 간주
+  const effectiveVanSuccess = vanApprovalSuccess || (!hasTerminalLog && posReceivedSuccess)
 
   const result = determineResult(entries)
   const resultDetail = generateResultDetail(entries, result)
@@ -97,7 +106,7 @@ function buildAttempt(
     startTimestamp: entries[0]?.timestamp ?? '',
     endTimestamp: entries[entries.length - 1]?.timestamp ?? '',
     vanApprovalSent,
-    vanApprovalSuccess,
+    vanApprovalSuccess: effectiveVanSuccess,
     posReceivedSuccess,
     result,
     resultDetail,

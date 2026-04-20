@@ -38,6 +38,7 @@ describe('groupPaymentAttempts', () => {
       entry({ timestamp: '14:27:15', event: '단말기 연결 요청' }),
       entry({ timestamp: '14:27:20', event: '단말기 수신 불가', status: 'failure' }),
       entry({ timestamp: '14:27:25', event: '단말기 연결 요청' }),
+      entry({ timestamp: '14:27:28', event: '승인 요청' }),
       entry({ timestamp: '14:27:30', event: '승인 성공', status: 'success' }),
     ]
     const attempts = groupPaymentAttempts(entries)
@@ -128,6 +129,7 @@ describe('groupPaymentAttempts', () => {
       entry({ timestamp: '12:47:25', event: '단말기 수신 불가', status: 'failure' }),
       // 3차: 성공
       entry({ timestamp: '12:47:36', event: '단말기 연결 요청' }),
+      entry({ timestamp: '12:47:38', event: '승인 요청' }),
       entry({ timestamp: '12:47:40', event: '승인 성공', status: 'success' }),
     ]
     const attempts = groupPaymentAttempts(entries)
