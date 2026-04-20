@@ -1,4 +1,6 @@
 import type { AnalysisResult } from '../../types'
+import { getEventDescription } from '../eventDescriptions'
+import { EventTooltip } from '../EventTooltip'
 
 interface LogTableSectionProps {
   result: AnalysisResult
@@ -42,6 +44,8 @@ export function LogTableSection({ result }: LogTableSectionProps) {
                   ? 'bg-[#0d1a0d]/30'
                   : ''
 
+              const description = getEventDescription(entry.event)
+
               return (
                 <tr key={index} className={rowBg} title={entry.rawLog}>
                   <td className="p-1.5 px-2 text-gray-500 font-mono">{entry.timestamp}</td>
@@ -50,6 +54,7 @@ export function LogTableSection({ result }: LogTableSectionProps) {
                   </td>
                   <td className={`p-1.5 px-2 ${isError ? 'text-[#e94560] font-bold' : 'text-gray-300'}`}>
                     {isError && '⚠️ '}{entry.event}
+                    {description && <EventTooltip description={description} />}
                   </td>
                   <td className="p-1.5 px-2">
                     <span style={{ color: status.color }}>●</span>{' '}
