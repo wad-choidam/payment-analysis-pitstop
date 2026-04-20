@@ -27,11 +27,11 @@ export function LogTableSection({ result }: LogTableSectionProps) {
         <table className="w-full text-xs">
           <thead>
             <tr className="bg-[#16213e]">
-              <th className="p-2 text-left text-gray-400 border-b border-[#0f3460] w-20">시간</th>
+              <th className="p-2 text-left text-gray-400 border-b border-[#0f3460] w-28">시간</th>
               <th className="p-2 text-left text-gray-400 border-b border-[#0f3460] w-20">출처</th>
+              <th className="p-2 text-left text-gray-400 border-b border-[#0f3460] w-20">상태</th>
               <th className="p-2 text-left text-gray-400 border-b border-[#0f3460]">이벤트</th>
-              <th className="p-2 text-left text-gray-400 border-b border-[#0f3460] w-16">상태</th>
-              <th className="p-2 text-left text-gray-400 border-b border-[#0f3460] w-40">ptxId</th>
+              <th className="p-2 text-left text-gray-400 border-b border-[#0f3460] w-52">ptxId</th>
             </tr>
           </thead>
           <tbody>
@@ -52,13 +52,13 @@ export function LogTableSection({ result }: LogTableSectionProps) {
                   <td className="p-1.5 px-2" style={{ color: entry.source === 'POS' ? '#00d2ff' : '#ffd700' }}>
                     {entry.source === 'POS' ? 'POS' : '단말기'}
                   </td>
-                  <td className={`p-1.5 px-2 ${isError ? 'text-[#e94560] font-bold' : 'text-gray-300'}`}>
-                    {isError && '⚠️ '}{entry.event}
-                    {description && <EventTooltip description={description} />}
-                  </td>
                   <td className="p-1.5 px-2">
                     <span style={{ color: status.color }}>●</span>{' '}
                     <span className="text-gray-400">{status.label}</span>
+                  </td>
+                  <td className={`p-1.5 px-2 ${isError ? 'text-[#e94560] font-bold' : 'text-gray-300'}`}>
+                    {isError && '⚠️ '}{entry.event}
+                    {description && <EventTooltip description={description} />}
                   </td>
                   <td className="p-1.5 px-2 text-[#ffd700] font-mono text-[10px]">
                     {entry.ptxId ?? '—'}
