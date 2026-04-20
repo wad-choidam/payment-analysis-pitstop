@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { LogInputSection } from './components/LogInput/LogInputSection'
 import { AnalysisSummary } from './components/AnalysisSummary'
 import { TimelineSection } from './components/Timeline/TimelineSection'
@@ -13,16 +13,21 @@ function App() {
   const [posLog, setPosLog] = useState('')
   const [terminalLog, setTerminalLog] = useState('')
   const [result, setResult] = useState<AnalysisResult | null>(null)
-  const [hasAnalyzed, setHasAnalyzed] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleAnalyze = () => {
-    const posEntries = parsePosLog(posLog)
-    const terminalEntries = parseTerminalLog(terminalLog)
-    const merged = mergeLogEntries(posEntries, terminalEntries)
-    const analysis = analyzeDiscrepancy(merged)
-    setResult(analysis)
-    setHasAnalyzed(true)
-  }
+  const handleAnalyze = useCallback(() => {
+    setResult(null)
+    setIsLoading(true)
+
+    setTimeout(() => {
+      const posEntries = parsePosLog(posLog)
+      const terminalEntries = parseTerminalLog(terminalLog)
+      const merged = mergeLogEntries(posEntries, terminalEntries)
+      const analysis = analyzeDiscrepancy(merged)
+      setResult(analysis)
+      setIsLoading(false)
+    }, 400)
+  }, [posLog, terminalLog])
 
   const isAnalyzable = posLog.trim().length > 0 || terminalLog.trim().length > 0
 
@@ -45,7 +50,16 @@ function App() {
         isAnalyzable={isAnalyzable}
       />
 
-      {hasAnalyzed && result && result.entries.length === 0 && (
+      {isLoading && (
+        <section className="border-b border-[#0f3460] p-6">
+          <div className="flex items-center justify-center gap-3 py-8">
+            <div className="w-5 h-5 border-2 border-[#e94560] border-t-transparent rounded-full animate-spin" />
+            <span className="text-gray-400 text-sm">로그 분석 중...</span>
+          </div>
+        </section>
+      )}
+
+      {!isLoading && result && result.entries.length === 0 && (
         <section className="border-b border-[#0f3460] p-6">
           <div className="bg-[#16213e] border border-[#0f3460] rounded-lg p-8 text-center">
             <div className="text-3xl mb-3">⚠️</div>
@@ -59,7 +73,7 @@ function App() {
         </section>
       )}
 
-      {result && result.entries.length > 0 && (
+      {!isLoading && result && result.entries.length > 0 && (
         <>
           <AnalysisSummary result={result} />
           <TimelineSection result={result} />
