@@ -13,6 +13,7 @@ function App() {
   const [posLog, setPosLog] = useState('')
   const [terminalLog, setTerminalLog] = useState('')
   const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [hasAnalyzed, setHasAnalyzed] = useState(false)
 
   const handleAnalyze = () => {
     const posEntries = parsePosLog(posLog)
@@ -20,6 +21,7 @@ function App() {
     const merged = mergeLogEntries(posEntries, terminalEntries)
     const analysis = analyzeDiscrepancy(merged)
     setResult(analysis)
+    setHasAnalyzed(true)
   }
 
   const isAnalyzable = posLog.trim().length > 0 || terminalLog.trim().length > 0
@@ -43,7 +45,21 @@ function App() {
         isAnalyzable={isAnalyzable}
       />
 
-      {result && (
+      {hasAnalyzed && result && result.entries.length === 0 && (
+        <section className="border-b border-[#0f3460] p-6">
+          <div className="bg-[#16213e] border border-[#0f3460] rounded-lg p-8 text-center">
+            <div className="text-3xl mb-3">⚠️</div>
+            <div className="text-[#ffd700] font-bold text-lg mb-2">분석할 수 있는 로그를 찾지 못했습니다</div>
+            <div className="text-gray-400 text-sm">
+              포스 로그는 <code className="text-[#00d2ff] bg-[#0a0a1a] px-1.5 py-0.5 rounded text-xs">{"#{HH:mm:ss}"}</code> 형식,
+              단말기 로그는 <code className="text-[#00d2ff] bg-[#0a0a1a] px-1.5 py-0.5 rounded text-xs">YYYY-MM-DD HH:mm:ss</code> 형식의 타임스탬프가 포함되어야 합니다.
+            </div>
+            <div className="text-gray-500 text-xs mt-3">올바른 로그 데이터를 입력한 후 다시 시도해주세요.</div>
+          </div>
+        </section>
+      )}
+
+      {result && result.entries.length > 0 && (
         <>
           <AnalysisSummary result={result} />
           <TimelineSection result={result} />
