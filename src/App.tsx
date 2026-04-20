@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { LogInputSection } from './components/LogInput/LogInputSection'
+import { AnalysisSummary } from './components/AnalysisSummary'
 import { parsePosLog } from './parser/posLogParser'
 import { parseTerminalLog } from './parser/terminalLogParser'
 import { mergeLogEntries } from './parser/logMerger'
@@ -41,9 +42,12 @@ function App() {
       />
 
       {result && (
-        <div className="p-6 text-gray-400 text-sm">
-          분석 완료: {result.entries.length}개 로그 항목, {result.errorPoints.length}개 오류 지점
-        </div>
+        <>
+          <AnalysisSummary result={result} />
+          <div className="p-6 text-gray-400 text-sm">
+            분석 완료: {result.entries.length}개 로그 항목, {result.errorPoints.length}개 오류 지점
+          </div>
+        </>
       )}
     </div>
   )
