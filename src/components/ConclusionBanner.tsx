@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import type { AnalysisResult } from '../types'
 import { buildAnalysisResultText } from '../utils/analysisResultBuilder'
 
@@ -8,14 +8,16 @@ interface ConclusionBannerProps {
 
 export function ConclusionBanner({ result }: ConclusionBannerProps) {
   const [copied, setCopied] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+
+  const copyText = useMemo(() => buildAnalysisResultText(result), [result])
 
   const handleCopy = useCallback(() => {
-    const text = buildAnalysisResultText(result)
-    navigator.clipboard.writeText(text).then(() => {
+    navigator.clipboard.writeText(copyText).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
-  }, [result])
+  }, [copyText])
 
   if (!result.conclusion) return null
 
@@ -50,14 +52,29 @@ export function ConclusionBanner({ result }: ConclusionBannerProps) {
               <span className="text-gray-400">
                 VAN 실 승인: <span className="font-bold" style={{ color: textColor }}>{result.actualApprovalCount ?? 0}건</span>
               </span>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="ml-auto text-xs px-3 py-1.5 rounded-md border border-[#0f3460] text-gray-300 hover:border-[#00d2ff] hover:text-[#00d2ff] transition-colors cursor-pointer"
-              >
-                {copied ? '복사 완료' : '분석 결과 복사'}
-              </button>
             </div>
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-3 text-xs px-3 py-1.5 rounded-md bg-[#00d2ff] text-[#0a0a1a] font-bold hover:bg-[#00b8e6] transition-colors cursor-pointer inline-flex items-center gap-1"
+            >
+              <span>{expanded ? '접기' : '분석 결과 더보기'}</span>
+              <span className="text-[10px]">{expanded ? '▲' : '▼'}</span>
+            </button>
+            {expanded && (
+              <div className="mt-3 bg-[#0a0a1a] border border-[#0f3460] rounded-md p-3">
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="text-xs px-3 py-1.5 rounded-md border border-[#0f3460] text-gray-300 hover:border-[#00d2ff] hover:text-[#00d2ff] transition-colors cursor-pointer mb-3"
+                >
+                  {copied ? '복사 완료' : '분석 결과 복사'}
+                </button>
+                <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono max-h-96 overflow-auto">
+                  {copyText}
+                </pre>
+              </div>
+            )}
           </div>
         </div>
       </div>
