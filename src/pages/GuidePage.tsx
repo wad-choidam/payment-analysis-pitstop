@@ -1,5 +1,3 @@
-import { EventTooltip } from '../components/EventTooltip'
-
 function SectionTitle({ number, title }: { number: number; title: string }) {
   return (
     <div className="flex items-center gap-2 mb-4">
@@ -15,15 +13,15 @@ function Card({ children, className = '' }: { children: React.ReactNode; classNa
 
 /* ─── 1. 통신 흐름 ─── */
 const FLOW_STEPS = [
-  { from: 'POS', to: '단말기', label: '연결 요청', arrow: '→' },
-  { from: 'POS', to: '단말기', label: '연결 성공', arrow: '←' },
-  { from: 'POS', to: '단말기', label: '직전 거래 데이터 요청 (중복 결제 체크용)', arrow: '→' },
-  { from: 'POS', to: '단말기', label: '직전 거래 데이터 응답', arrow: '←' },
-  { from: 'POS', to: '', label: '중복 결제 확인 (ptxId 비교)', arrow: '' },
-  { from: 'POS', to: '단말기', label: '카드 결제 승인 요청', arrow: '→' },
-  { from: '', to: '단말기 → VAN', label: '승인 요청', arrow: '→' },
-  { from: '', to: '단말기 ← VAN', label: '승인 응답', arrow: '←' },
-  { from: 'POS', to: '단말기', label: '승인 결과 응답', arrow: '←' },
+  { from: 'POS', to: '단말기', label: '연결 요청', arrow: '→', subArrow: '', subTo: '' },
+  { from: 'POS', to: '단말기', label: '연결 성공', arrow: '←', subArrow: '', subTo: '' },
+  { from: 'POS', to: '단말기', label: '직전 거래 데이터 요청 (중복 결제 체크용)', arrow: '→', subArrow: '', subTo: '' },
+  { from: 'POS', to: '단말기', label: '직전 거래 데이터 응답', arrow: '←', subArrow: '', subTo: '' },
+  { from: 'POS', to: '', label: '중복 결제 확인 (ptxId 비교)', arrow: '', subArrow: '', subTo: '' },
+  { from: 'POS', to: '단말기', label: '카드 결제 승인 요청', arrow: '→', subArrow: '', subTo: '' },
+  { from: '', to: '단말기', label: '승인 요청', arrow: '', subArrow: '→', subTo: 'VAN' },
+  { from: '', to: '단말기', label: '승인 응답', arrow: '', subArrow: '←', subTo: 'VAN' },
+  { from: 'POS', to: '단말기', label: '승인 결과 응답', arrow: '←', subArrow: '', subTo: '' },
 ]
 
 function CommunicationFlow() {
@@ -32,9 +30,11 @@ function CommunicationFlow() {
       {FLOW_STEPS.map((step, i) => (
         <div key={i} className="flex items-center gap-2 text-sm">
           <span className="w-5 h-5 rounded-full bg-[#0f3460] text-gray-400 flex items-center justify-center text-[10px] font-bold shrink-0">{i + 1}</span>
-          <span className="text-[#00d2ff] w-14 text-right shrink-0">{step.from}</span>
+          <span className="text-[#00d2ff] w-14 text-center shrink-0">{step.from}</span>
           <span className="text-gray-500 w-4 text-center">{step.arrow}</span>
-          <span className="text-[#ffd700] w-20 shrink-0">{step.to}</span>
+          <span className="text-[#ffd700] w-14 text-center shrink-0">{step.to}</span>
+          <span className="text-gray-500 w-4 text-center shrink-0">{step.subArrow}</span>
+          <span className="text-[#a78bfa] w-10 text-center shrink-0">{step.subTo}</span>
           <span className="text-gray-300">{step.label}</span>
         </div>
       ))}
@@ -48,11 +48,11 @@ const DISCREPANCY_TYPES: { title: string; severity: 'high' | 'medium' | 'low'; d
   { title: '단말기 수신 불가 (9999)', severity: 'high', description: '단말기가 이전 요청 처리 중이거나 결제 진입 불가 상태. POS는 실패로 처리하지만 단말기가 단독 결제를 진행할 수 있음.', logHint: 'res: 9999, Transaction Skipped! NOT AVAILABLE' },
   { title: 'PtxID 불일치 (동기화 실패)', severity: 'high', description: '이전 결제가 비정상 종료된 후 직전 거래의 ptxId와 현재 ptxId가 달라 동기화 실패.', logHint: '승인정보 동기화 실패 (PtxID 불일치)' },
   { title: 'EOT 비정상', severity: 'high', description: '단말기에서 결제 성공했으나 POS와의 정상 종료 절차(EOT)가 완료되지 않음. 단말기 자체 영수증 출력.', logHint: 'ResultActivity: [!] EOT ABNORMAL | Print itself' },
-  { title: 'IC카드 리딩 실패 (CX01/CX06)', severity: 'low', description: 'IC칩 읽기 실패. MSR 모드로 전환하거나 재시도. 보통 여러 번 실패 후 성공하며 중복결제와 무관.', logHint: 'FAIL | ICC CARD READ | code: CX01 또는 CX06' },
-  { title: '프린터 오류 (9959)', severity: 'medium', description: '단말기 프린터 오류. 매장에서 결제가 안 된 것으로 오인하여 재시도할 수 있음.', logHint: 'res: 9959' },
   { title: 'VAN 통신 타임아웃', severity: 'high', description: 'VAN사와의 네트워크 통신이 타임아웃. 매장 네트워크 장애가 원인이며 결제 자체가 실패.', logHint: 'SocketTimeoutException' },
   { title: '강제 취소 타임아웃 (9989)', severity: 'high', description: 'VAN 통신 불가 상태에서 강제 취소 요청도 타임아웃. 네트워크 장애 지속 중.', logHint: 'res: 9989, CARD_FORCE_CANCEL' },
+  { title: '프린터 오류 (9959)', severity: 'medium', description: '단말기 프린터 오류. 매장에서 결제가 안 된 것으로 오인하여 재시도할 수 있음.', logHint: 'res: 9959' },
   { title: '충전독 접촉/분리', severity: 'medium', description: '영업 중 충전독에 접촉/분리 시 통신 불량 발생하여 결제 불일치 가능.', logHint: 'ChargingStatusReceiver: ACTION_POWER_DISCONNECTED' },
+  { title: 'IC카드 리딩 실패 (CX01/CX06)', severity: 'low', description: 'IC칩 읽기 실패. MSR 모드로 전환하거나 재시도. 보통 여러 번 실패 후 성공하며 중복결제와 무관.', logHint: 'FAIL | ICC CARD READ | code: CX01 또는 CX06' },
 ]
 
 const SEVERITY_COLORS = {
@@ -79,12 +79,12 @@ function DiscrepancyCard({ type }: { type: typeof DISCREPANCY_TYPES[number] }) {
 const RESPONSE_CODES: { code: string; meaning: string; severity: string; color: string }[] = [
   { code: '0000', meaning: '정상 승인', severity: '성공', color: '#4ade80' },
   { code: '9999', meaning: '단말기 수신 불가 / 이전 요청 처리 중', severity: '실패', color: '#e94560' },
-  { code: '9959', meaning: '프린터 오류', severity: '경고', color: '#ffd700' },
   { code: '9989', meaning: '강제 취소 타임아웃 (VAN 통신 불가)', severity: '실패', color: '#e94560' },
-  { code: 'CX01', meaning: 'IC카드 리딩 실패', severity: '경고', color: '#ffd700' },
-  { code: 'CX06', meaning: 'IC카드 리딩 실패 (삼성페이 등)', severity: '경고', color: '#ffd700' },
   { code: 'CE106', meaning: '승인정보 동기화 실패 (PtxID 불일치)', severity: '불일치', color: '#f97316' },
   { code: 'CE107', meaning: '기타 포스 결제데이터 불일치', severity: '불일치', color: '#f97316' },
+  { code: '9959', meaning: '프린터 오류', severity: '경고', color: '#ffd700' },
+  { code: 'CX01', meaning: 'IC카드 리딩 실패', severity: '경고', color: '#ffd700' },
+  { code: 'CX06', meaning: 'IC카드 리딩 실패 (삼성페이 등)', severity: '경고', color: '#ffd700' },
 ]
 
 /* ─── 4. 결론 판단 ─── */
@@ -234,10 +234,7 @@ export function GuidePage() {
               <div className="flex flex-col gap-2">
                 {cat.items.map((item) => (
                   <div key={item.keyword} className="flex items-start gap-2 text-xs">
-                    <span className="text-white font-bold shrink-0 w-52">
-                      {item.keyword}
-                      <EventTooltip description={item.description} />
-                    </span>
+                    <span className="text-white font-bold shrink-0 w-52">{item.keyword}</span>
                     <span className="text-gray-400">{item.description}</span>
                   </div>
                 ))}
