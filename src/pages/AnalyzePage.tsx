@@ -20,6 +20,7 @@ export function AnalyzePage() {
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [sampleLoaded, setSampleLoaded] = useState(false)
+  const [parseError, setParseError] = useState<string | null>(null)
 
   const handleReset = useCallback(() => {
     setPosLog('')
@@ -28,6 +29,12 @@ export function AnalyzePage() {
     setAndroidEntries([])
     setResult(null)
     setSampleLoaded(false)
+    setParseError(null)
+  }, [])
+
+  const handleParseError = useCallback((message: string) => {
+    setParseError(message)
+    setTimeout(() => setParseError(null), 6000)
   }, [])
 
   const handleAnalyze = useCallback(() => {
@@ -85,15 +92,40 @@ export function AnalyzePage() {
       <LogInputSection
         posLog={posLog}
         terminalLog={terminalLog}
+        serviceType={serviceType}
         onPosLogChange={setPosLog}
         onTerminalLogChange={setTerminalLog}
         onServiceTypeDetected={setServiceType}
         onAndroidEntriesDetected={setAndroidEntries}
+        onParseError={handleParseError}
         onAnalyze={handleAnalyze}
         onReset={handleReset}
         isAnalyzable={isAnalyzable}
         sampleLoaded={sampleLoaded}
       />
+
+      {parseError && (
+        <div
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 max-w-md bg-[#2a1621] border border-[#e94560] text-[#ff8fa5] px-4 py-3 rounded-lg shadow-lg text-sm z-50 animate-fade-in-up"
+          role="alert"
+        >
+          <div className="flex items-start gap-2">
+            <span>⚠️</span>
+            <div className="flex-1">
+              <div className="font-bold text-[#e94560] mb-0.5">파일 처리 실패</div>
+              <div className="text-gray-300">{parseError}</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setParseError(null)}
+              className="text-gray-500 hover:text-gray-300 cursor-pointer"
+              aria-label="닫기"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {isLoading && (
         <section className="border-b border-[#0f3460] p-6">

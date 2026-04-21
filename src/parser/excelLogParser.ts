@@ -11,6 +11,8 @@ export interface ExcelParseResult {
   osType?: string;
   /** AOS일 때 구조화된 이벤트 엔트리. iOS면 undefined. */
   androidEntries?: LogEntry[];
+  /** 파싱 실패/구조 불일치/빈 데이터 시 사용자에게 노출할 한글 에러 메시지. 성공 시 undefined. */
+  error?: string;
 }
 
 /**
@@ -18,13 +20,27 @@ export interface ExcelParseResult {
  *
  * iOS (osType=IOS): raw.detailLog 텍스트를 posLog로 반환. 이후 posLogParser로 파싱.
  * 안드로이드 (osType=AOS): 각 행이 하나의 이벤트이므로 그대로 LogEntry[]로 변환해 androidEntries로 반환.
+ *
+ * 실패 경로 (error 필드로 반환):
+ * - 엑셀 파일 자체를 읽을 수 없는 경우
+ * - 시트가 없는 경우
+ * - 분석 가능한 로그 데이터가 한 건도 없는 경우
  */
 export function extractPosLogFromExcel(buffer: ArrayBuffer): ExcelParseResult {
-  const wb = read(buffer, { type: 'array' })
-  const ws = wb.Sheets[wb.SheetNames[0]]
-  if (!ws) return { posLog: '' }
+  let wb
+  try {
+    wb = read(buffer, { type: 'array' })
+  } catch {
+    return { posLog: '', error: '엑셀 파일을 읽을 수 없습니다. 파일이 손상되었거나 지원되지 않는 형식일 수 있습니다.' }
+  }
+
+  const firstSheetName = wb.SheetNames[0]
+  const ws = firstSheetName ? wb.Sheets[firstSheetName] : undefined
+  if (!ws) return { posLog: '', error: '엑셀 파일에서 시트를 찾을 수 없습니다.' }
 
   const rows = utils.sheet_to_json<Record<string, string>>(ws)
+  if (rows.length === 0) return { posLog: '', error: '엑셀 시트에 데이터가 없습니다.' }
+
   let serviceType: string | undefined
   let osType: string | undefined
 
@@ -36,6 +52,9 @@ export function extractPosLogFromExcel(buffer: ArrayBuffer): ExcelParseResult {
 
   if (osType === 'AOS') {
     const androidEntries = parseAndroidExcelRows(rows as AndroidExcelRow[])
+    if (androidEntries.length === 0) {
+      return { posLog: '', serviceType: 'APOS', osType, error: '안드로이드 이벤트 로그를 추출하지 못했습니다. 엑셀 구조가 예상과 다를 수 있습니다.' }
+    }
     return { posLog: '', serviceType: 'APOS', osType, androidEntries }
   }
 
@@ -51,7 +70,16 @@ export function extractPosLogFromExcel(buffer: ArrayBuffer): ExcelParseResult {
         detailLogs.push(detailLog)
       }
     } catch {
-      // JSON 파싱 실패 시 스킵
+      // JSON 파싱 실패 시 스킵 — 개별 행만 무시
+    }
+  }
+
+  if (detailLogs.length === 0) {
+    return {
+      posLog: '',
+      serviceType,
+      osType,
+      error: 'iOS 포스 로그(detailLog)를 찾을 수 없습니다. 예상 엑셀 구조가 아닐 수 있습니다.',
     }
   }
 

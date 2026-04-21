@@ -1,13 +1,16 @@
 import { LogTextArea } from './LogTextArea'
+import { PlatformBadge } from '../PlatformBadge'
 import type { LogEntry } from '../../types'
 
 interface LogInputSectionProps {
   posLog: string
   terminalLog: string
+  serviceType?: string
   onPosLogChange: (value: string) => void
   onTerminalLogChange: (value: string) => void
   onServiceTypeDetected?: (serviceType: string) => void
   onAndroidEntriesDetected?: (entries: LogEntry[]) => void
+  onParseError?: (message: string) => void
   onAnalyze: () => void
   onReset: () => void
   isAnalyzable: boolean
@@ -17,10 +20,12 @@ interface LogInputSectionProps {
 export function LogInputSection({
   posLog,
   terminalLog,
+  serviceType,
   onPosLogChange,
   onTerminalLogChange,
   onServiceTypeDetected,
   onAndroidEntriesDetected,
+  onParseError,
   onAnalyze,
   onReset,
   isAnalyzable,
@@ -52,7 +57,9 @@ export function LogInputSection({
           onChange={onPosLogChange}
           onServiceTypeDetected={onServiceTypeDetected}
           onAndroidEntriesDetected={onAndroidEntriesDetected}
+          onParseError={onParseError}
           placeholder="엑셀(.xlsx) 파일을 드래그하거나 텍스트를 붙여넣으세요..."
+          headerSlot={serviceType ? <PlatformBadge serviceType={serviceType} /> : null}
         />
         <LogTextArea
           label="📋 단말기 로그 (Terminal Log)"

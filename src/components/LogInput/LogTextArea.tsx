@@ -24,11 +24,13 @@ interface LogTextAreaProps {
   onChange: (value: string) => void
   onServiceTypeDetected?: (serviceType: string) => void
   onAndroidEntriesDetected?: (entries: LogEntry[]) => void
+  onParseError?: (message: string) => void
   placeholder?: string
   showFileUpload?: boolean
+  headerSlot?: React.ReactNode
 }
 
-export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onAndroidEntriesDetected, placeholder, showFileUpload = true }: LogTextAreaProps) {
+export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onAndroidEntriesDetected, onParseError, placeholder, showFileUpload = true, headerSlot }: LogTextAreaProps) {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -38,6 +40,10 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
       reader.onload = (ev) => {
         const buffer = ev.target?.result as ArrayBuffer
         const result = extractPosLogFromExcel(buffer)
+        if (result.error) {
+          onParseError?.(result.error)
+          return
+        }
         if (result.androidEntries && result.androidEntries.length > 0) {
           // 안드로이드: entries를 iOS 포스 로그와 유사한 한 줄 텍스트로 렌더링해 사용자에게 노출
           onChange(formatAndroidEntriesAsText(result.androidEntries))
@@ -50,6 +56,7 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
           onServiceTypeDetected(result.serviceType)
         }
       }
+      reader.onerror = () => onParseError?.('파일을 읽는 중 오류가 발생했습니다.')
       reader.readAsArrayBuffer(file)
     } else {
       const reader = new FileReader()
@@ -57,9 +64,10 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
         onChange(ev.target?.result as string)
         onAndroidEntriesDetected?.([])
       }
+      reader.onerror = () => onParseError?.('파일을 읽는 중 오류가 발생했습니다.')
       reader.readAsText(file)
     }
-  }, [onChange, onServiceTypeDetected, onAndroidEntriesDetected])
+  }, [onChange, onServiceTypeDetected, onAndroidEntriesDetected, onParseError])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -103,6 +111,7 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
           </>
         )}
       </div>
+      {headerSlot && <div className="mb-2 animate-fade-in">{headerSlot}</div>}
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
