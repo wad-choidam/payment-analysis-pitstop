@@ -9,13 +9,14 @@ import { parsePosLog } from '../parser/posLogParser'
 import { parseTerminalLog } from '../parser/terminalLogParser'
 import { mergeLogEntries } from '../parser/logMerger'
 import { analyzeDiscrepancy } from '../analyzer/discrepancyAnalyzer'
-import type { AnalysisResult } from '../types'
+import type { AnalysisResult, LogEntry } from '../types'
 import { SAMPLE_BPOS_LOG } from '../data/sampleLogs'
 
 export function AnalyzePage() {
   const [posLog, setPosLog] = useState('')
   const [terminalLog, setTerminalLog] = useState('')
   const [serviceType, setServiceType] = useState<string | undefined>()
+  const [androidEntries, setAndroidEntries] = useState<LogEntry[]>([])
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [sampleLoaded, setSampleLoaded] = useState(false)
@@ -24,6 +25,7 @@ export function AnalyzePage() {
     setPosLog('')
     setTerminalLog('')
     setServiceType(undefined)
+    setAndroidEntries([])
     setResult(null)
     setSampleLoaded(false)
   }, [])
@@ -34,24 +36,30 @@ export function AnalyzePage() {
     setSampleLoaded(false)
 
     setTimeout(() => {
-      const posEntries = parsePosLog(posLog)
-      const terminalEntries = parseTerminalLog(terminalLog)
-      const merged = mergeLogEntries(posEntries, terminalEntries)
-      const analysis = analyzeDiscrepancy(merged, { posTypeHint: serviceType })
+      let analysisEntries: LogEntry[]
+      if (androidEntries.length > 0) {
+        analysisEntries = androidEntries
+      } else {
+        const posEntries = parsePosLog(posLog)
+        const terminalEntries = parseTerminalLog(terminalLog)
+        analysisEntries = mergeLogEntries(posEntries, terminalEntries)
+      }
+      const analysis = analyzeDiscrepancy(analysisEntries, { posTypeHint: serviceType })
       setResult(analysis)
       setIsLoading(false)
     }, 400)
-  }, [posLog, terminalLog, serviceType])
+  }, [posLog, terminalLog, serviceType, androidEntries])
 
   const handleLoadSample = useCallback(() => {
     setPosLog(SAMPLE_BPOS_LOG)
     setTerminalLog('')
     setServiceType('BPOS')
+    setAndroidEntries([])
     setResult(null)
     setSampleLoaded(true)
   }, [])
 
-  const isAnalyzable = posLog.trim().length > 0 || terminalLog.trim().length > 0
+  const isAnalyzable = posLog.trim().length > 0 || terminalLog.trim().length > 0 || androidEntries.length > 0
 
   return (
     <>
@@ -80,6 +88,7 @@ export function AnalyzePage() {
         onPosLogChange={setPosLog}
         onTerminalLogChange={setTerminalLog}
         onServiceTypeDetected={setServiceType}
+        onAndroidEntriesDetected={setAndroidEntries}
         onAnalyze={handleAnalyze}
         onReset={handleReset}
         isAnalyzable={isAnalyzable}

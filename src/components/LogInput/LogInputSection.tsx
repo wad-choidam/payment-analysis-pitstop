@@ -1,4 +1,5 @@
 import { LogTextArea } from './LogTextArea'
+import type { LogEntry } from '../../types'
 
 interface LogInputSectionProps {
   posLog: string
@@ -6,6 +7,7 @@ interface LogInputSectionProps {
   onPosLogChange: (value: string) => void
   onTerminalLogChange: (value: string) => void
   onServiceTypeDetected?: (serviceType: string) => void
+  onAndroidEntriesDetected?: (entries: LogEntry[]) => void
   onAnalyze: () => void
   onReset: () => void
   isAnalyzable: boolean
@@ -18,6 +20,7 @@ export function LogInputSection({
   onPosLogChange,
   onTerminalLogChange,
   onServiceTypeDetected,
+  onAndroidEntriesDetected,
   onAnalyze,
   onReset,
   isAnalyzable,
@@ -48,6 +51,7 @@ export function LogInputSection({
           value={posLog}
           onChange={onPosLogChange}
           onServiceTypeDetected={onServiceTypeDetected}
+          onAndroidEntriesDetected={onAndroidEntriesDetected}
           placeholder="엑셀(.xlsx) 파일을 드래그하거나 텍스트를 붙여넣으세요..."
         />
         <LogTextArea

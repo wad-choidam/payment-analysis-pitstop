@@ -2,7 +2,7 @@ export type LogSource = 'POS' | 'TERMINAL';
 
 export type LogStatus = 'success' | 'failure' | 'warning' | 'info';
 
-export type PosType = 'BPOS' | 'CPOS' | 'UNKNOWN';
+export type PosType = 'BPOS' | 'CPOS' | 'APOS' | 'UNKNOWN';
 
 export type TerminalType = 'Eximbay' | 'KIS' | 'KOCES' | 'UNKNOWN';
 
@@ -13,6 +13,8 @@ export interface LogEntry {
   rawLog: string;
   status: LogStatus;
   ptxId?: string;
+  resultCode?: string;
+  resultMessage?: string;
 }
 
 export type AttemptResult = 'success' | 'failure' | 'cancelled' | 'timeout' | 'unknown';

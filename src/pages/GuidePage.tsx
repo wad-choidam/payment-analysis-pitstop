@@ -136,16 +136,18 @@ const EVENT_CATEGORIES: { category: string; items: { keyword: string; descriptio
 
 /* ─── 6. 용어 ─── */
 const GLOSSARY: { term: string; description: string }[] = [
-  { term: 'ptxId (eximbayPtxId)', description: 'Eximbay 단말기 거래 고유 ID. BPOS-UUID 또는 CPOS-UUID 형식.' },
+  { term: 'ptxId (eximbayPtxId)', description: 'Eximbay 단말기 거래 고유 ID. BPOS-/CPOS-/APOS- UUID 형식.' },
   { term: 'VAN', description: '결제 대행사. 단말기가 VAN과 직접 통신하여 카드 승인을 처리.' },
   { term: 'EOT', description: 'End of Transaction. 거래 종료 절차. 비정상이면 단말기가 자체 영수증 출력.' },
   { term: '직전 거래 조회', description: '중복 결제 방지를 위해 이전 거래의 ptxId를 조회하는 과정.' },
   { term: '임의등록', description: '중복 결제 의심 팝업에서 매장이 수동으로 결제를 확정 처리하는 것.' },
   { term: 'UBMS', description: '결제내역 관리 시스템. 중복결제 의심 시 금액/카드번호/결제자를 확인하는 데 사용.' },
   { term: 'Eximbay', description: '결제 단말기 제조사. T650P 모델을 사용. 직전 거래 조회 및 중복 결제 체크 기능 지원.' },
-  { term: 'BPOS / CPOS', description: 'BPOS는 B-POS 시스템, CPOS는 캐치테이블 POS 시스템.' },
-  { term: '결제 시도 그룹화', description: '로그를 N차 결제 시도로 묶어 분석하는 방식. POS 연결 요청이 새 시도의 시작점.' },
+  { term: 'BPOS / CPOS (iOS)', description: 'iOS 기반 POS 시스템. 엑셀의 detailLog(텍스트 로그) 필드에 상세 로그가 기록됨.' },
+  { term: 'APOS (Android)', description: '안드로이드 기반 POS 시스템. 엑셀 각 행이 하나의 이벤트로 구조화되어 있고, raw.response에 resultCode/resultMessage가 담김.' },
+  { term: '결제 시도 그룹화', description: '로그를 N차 결제 시도로 묶어 분석. iOS는 "단말기 연결 요청", 안드로이드는 두 번째 "카드 결제 승인 클릭"이 새 시도 시작점.' },
 ]
+
 
 /* ─── 메인 ─── */
 export function GuidePage() {
@@ -153,7 +155,7 @@ export function GuidePage() {
     <div className="max-w-4xl mx-auto py-8 px-6">
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-2">결제 불일치 분석 가이드</h1>
-        <p className="text-gray-400 text-sm">BPOS/CPOS ↔ Eximbay 단말기 간 결제 불일치 발생 시 원인을 파악하기 위한 참고 자료입니다.</p>
+        <p className="text-gray-400 text-sm">BPOS/CPOS(iOS), APOS(Android) ↔ Eximbay 단말기 간 결제 불일치 발생 시 원인을 파악하기 위한 참고 자료입니다.</p>
       </div>
 
       {/* 1. 통신 흐름 */}
@@ -258,6 +260,7 @@ export function GuidePage() {
           </div>
         </Card>
       </section>
+
     </div>
   )
 }

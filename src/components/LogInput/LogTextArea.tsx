@@ -1,16 +1,34 @@
 import { useCallback, useRef, useState } from 'react'
 import { extractPosLogFromExcel, isExcelFile } from '../../parser/excelLogParser'
+import type { LogEntry } from '../../types'
+
+/**
+ * Android 엑셀에서 추출한 LogEntry[]를 iOS detailLog와 유사한 형식의 텍스트로 렌더링한다.
+ * 각 줄: `#HH:mm:ss.mmm 이벤트명 | ptxId | res: 코드 | 메시지`
+ */
+function formatAndroidEntriesAsText(entries: LogEntry[]): string {
+  return entries
+    .map((e) => {
+      const parts: string[] = [`#${e.timestamp}`, e.event]
+      if (e.ptxId) parts.push(e.ptxId)
+      if (e.resultCode) parts.push(`res: ${e.resultCode}`)
+      if (e.resultMessage) parts.push(e.resultMessage)
+      return parts.join(' | ')
+    })
+    .join('\n')
+}
 
 interface LogTextAreaProps {
   label: string
   value: string
   onChange: (value: string) => void
   onServiceTypeDetected?: (serviceType: string) => void
+  onAndroidEntriesDetected?: (entries: LogEntry[]) => void
   placeholder?: string
   showFileUpload?: boolean
 }
 
-export function LogTextArea({ label, value, onChange, onServiceTypeDetected, placeholder, showFileUpload = true }: LogTextAreaProps) {
+export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onAndroidEntriesDetected, placeholder, showFileUpload = true }: LogTextAreaProps) {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -20,7 +38,14 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, pla
       reader.onload = (ev) => {
         const buffer = ev.target?.result as ArrayBuffer
         const result = extractPosLogFromExcel(buffer)
-        onChange(result.posLog)
+        if (result.androidEntries && result.androidEntries.length > 0) {
+          // 안드로이드: entries를 iOS 포스 로그와 유사한 한 줄 텍스트로 렌더링해 사용자에게 노출
+          onChange(formatAndroidEntriesAsText(result.androidEntries))
+          onAndroidEntriesDetected?.(result.androidEntries)
+        } else {
+          onChange(result.posLog)
+          onAndroidEntriesDetected?.([])
+        }
         if (result.serviceType && onServiceTypeDetected) {
           onServiceTypeDetected(result.serviceType)
         }
@@ -30,10 +55,11 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, pla
       const reader = new FileReader()
       reader.onload = (ev) => {
         onChange(ev.target?.result as string)
+        onAndroidEntriesDetected?.([])
       }
       reader.readAsText(file)
     }
-  }, [onChange, onServiceTypeDetected])
+  }, [onChange, onServiceTypeDetected, onAndroidEntriesDetected])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()

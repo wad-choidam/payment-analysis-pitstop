@@ -1,7 +1,7 @@
 import type { LogEntry, PaymentAttempt, AttemptResult } from '../types'
 
 const BOUNDARY_EVENTS = [
-  '단말기 연결 요청',       // POS side
+  '단말기 연결 요청',       // POS side (iOS)
 ]
 
 const BOUNDARY_PATTERNS = [
@@ -11,6 +11,17 @@ const BOUNDARY_PATTERNS = [
 function isBoundaryEvent(entry: LogEntry): boolean {
   if (BOUNDARY_EVENTS.includes(entry.event)) return true
   return BOUNDARY_PATTERNS.some(p => p.test(entry.event))
+}
+
+/**
+ * 안드로이드(APOS) 로그는 '단말기 연결 요청' 이벤트가 없다.
+ * 대신 새 '승인 요청'이 나왔는데 현재 슬라이스에 이미 '승인 요청'이 있었다면 새 시도로 간주한다.
+ * iOS에서는 '승인 요청' 전에 '단말기 연결 요청'이 먼저 경계를 만들기 때문에 이 조건에 걸리지 않는다.
+ */
+function isExtendedBoundary(entry: LogEntry, currentSlice: LogEntry[]): boolean {
+  if (isBoundaryEvent(entry)) return true
+  if (entry.event === '승인 요청' && currentSlice.some(e => e.event === '승인 요청')) return true
+  return false
 }
 
 function hasPosApprovalSuccess(entries: LogEntry[]): boolean {
@@ -125,7 +136,7 @@ export function groupPaymentAttempts(allEntries: LogEntry[]): PaymentAttempt[] {
   let currentStart = 0
 
   for (let i = 0; i < allEntries.length; i++) {
-    if (i > currentStart && isBoundaryEvent(allEntries[i])) {
+    if (i > currentStart && isExtendedBoundary(allEntries[i], allEntries.slice(currentStart, i))) {
       const slice = allEntries.slice(currentStart, i)
       attempts.push(buildAttempt(attempts.length + 1, slice, currentStart, i - 1))
       currentStart = i

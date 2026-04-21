@@ -119,3 +119,26 @@ export const SAMPLE_BPOS_LOG = `#12:05:40.510 [전송] 승인 접속 시도
 #12:15:58.086 최종결론: 단말기가 수신 가능한 상태가 아님`
 
 export const SAMPLE_BPOS_DESCRIPTION = '미무 1274840 — BPOS 5회 시도, 중복 결제 아님 (실제 분석 사례)'
+
+/**
+ * 안드로이드(APOS) 샘플 — 킴보 1513721 기반. 엑셀 각 행이 하나의 이벤트로 구조화된 형태.
+ * 1차: 승인 성공 (0000) / 2차: 단말기 수신 불가 (9999) → 중복 결제 아님.
+ * 2차 시도에 과거 ptxId의 직전거래 응답이 섞여있어 ptxId 대조 로직 검증에도 유용.
+ */
+import type { AndroidExcelRow } from '../parser/androidExcelParser'
+
+export const SAMPLE_APOS_ROWS: AndroidExcelRow[] = [
+  { eventDateTime: '2026-01-30T13:50:16.296192+09:00', data2: '카드 결제 승인 클릭', data3: 'APOS-11737820-0971-451d-a5a8-f6c30620a795', raw: '{"raw":{"data3":"APOS-11737820-0971-451d-a5a8-f6c30620a795","data2":"카드 결제 승인 클릭"}}' },
+  { eventDateTime: '2026-01-30T13:50:17.073560+09:00', data2: '카드 리딩 요청', data3: 'NULL', raw: '{"raw":{"data2":"카드 리딩 요청"}}' },
+  { eventDateTime: '2026-01-30T13:50:22.861460+09:00', data2: '카드 데이터 응답', data3: 'APOS-11737820-0971-451d-a5a8-f6c30620a795', raw: '{"raw":{"data3":"APOS-11737820-0971-451d-a5a8-f6c30620a795","response":"{\\"data\\":{\\"ptxid\\":\\"APOS-11737820-0971-451d-a5a8-f6c30620a795\\"},\\"resultCode\\":\\"0000\\",\\"resultMessage\\":\\"완료\\"}","data2":"카드 데이터 응답"}}' },
+  { eventDateTime: '2026-01-30T13:50:23.213462+09:00', data2: '이전 카드 데이터 클릭', data3: 'APOS-11737820-0971-451d-a5a8-f6c30620a795', raw: '{"raw":{"data3":"APOS-11737820-0971-451d-a5a8-f6c30620a795","data2":"이전 카드 데이터 클릭"}}' },
+  { eventDateTime: '2026-01-30T13:50:23.328935+09:00', data2: '이전 카드 데이터 요청', data3: 'APOS-11737820-0971-451d-a5a8-f6c30620a795', raw: '{"raw":{"data3":"APOS-11737820-0971-451d-a5a8-f6c30620a795","data2":"이전 카드 데이터 요청"}}' },
+  { eventDateTime: '2026-01-30T13:50:24.658953+09:00', data2: '카드 결제 승인 클릭', data3: 'APOS-6a2a7987-0bcf-46eb-8bcd-9f5a210a3eeb', raw: '{"raw":{"data3":"APOS-6a2a7987-0bcf-46eb-8bcd-9f5a210a3eeb","data2":"카드 결제 승인 클릭"}}' },
+  { eventDateTime: '2026-01-30T13:50:25.489534+09:00', data2: '카드 리딩 요청', data3: 'NULL', raw: '{"raw":{"data2":"카드 리딩 요청"}}' },
+  { eventDateTime: '2026-01-30T13:50:25.763074+09:00', data2: '이전 카드 데이터 응답', data3: 'APOS-f1131264-642a-4058-aa3a-da4100f533bb', raw: '{"raw":{"data3":"APOS-f1131264-642a-4058-aa3a-da4100f533bb","response":"{\\"data\\":{\\"ptxid\\":\\"APOS-f1131264-642a-4058-aa3a-da4100f533bb\\"},\\"resultCode\\":\\"0000\\",\\"resultMessage\\":\\"결제 성공\\"}","data2":"이전 카드 데이터 응답"}}' },
+  { eventDateTime: '2026-01-30T13:50:52.287874+09:00', data2: '카드 데이터 응답', data3: 'NULL', raw: '{"raw":{"data3":"","response":"{\\"resultCode\\":\\"9999\\",\\"resultMessage\\":\\"단말기가 수신 가능한 상태가 아님\\"}","data2":"카드 데이터 응답"}}' },
+  { eventDateTime: '2026-01-30T13:50:52.628806+09:00', data2: '이전 카드 데이터 클릭', data3: 'APOS-6a2a7987-0bcf-46eb-8bcd-9f5a210a3eeb', raw: '{"raw":{"data3":"APOS-6a2a7987-0bcf-46eb-8bcd-9f5a210a3eeb","data2":"이전 카드 데이터 클릭"}}' },
+  { eventDateTime: '2026-01-30T13:50:53.172420+09:00', data2: '이전 카드 데이터 요청', data3: 'APOS-6a2a7987-0bcf-46eb-8bcd-9f5a210a3eeb', raw: '{"raw":{"data3":"APOS-6a2a7987-0bcf-46eb-8bcd-9f5a210a3eeb","data2":"이전 카드 데이터 요청"}}' },
+]
+
+export const SAMPLE_APOS_DESCRIPTION = '킴보 1513721 — APOS 2회 시도, 중복 결제 아님 (1차 성공 후 2차에 9999, 실제 분석 사례)'

@@ -58,6 +58,9 @@ const DESCRIPTIONS: { keyword: string; description: string }[] = [
   // 카드 리딩
   { keyword: '카드 리딩 시작', description: '단말기에서 카드 읽기를 시작. IC(접촉), CT_CTLS(비접촉), MSR(마그네틱) 모드가 있음.' },
   { keyword: '카드 리딩 성공', description: '카드 정보 읽기 성공. 이후 VAN사에 승인 요청이 진행됨.' },
+  { keyword: '카드 리딩 요청', description: '안드로이드(APOS) 포스가 단말기에 카드 리딩을 요청한 시점. 이후 카드 데이터 응답으로 결과가 전달됨.' },
+  // 승인 실패 (안드로이드/공통)
+  { keyword: '승인 실패', description: '단말기에서 승인 실패 응답이 전달됨. 괄호 안 메시지(resultMessage)에 구체적 원인이 표시됨.' },
   // 중복결제 확인
   { keyword: '알고있는 승인내역', description: '직전거래 조회 결과 이미 POS가 인지하고 있는 결제 건으로 확인됨. 정상 상태.' },
   { keyword: '승인금액 다름', description: '직전 거래와 현재 요청의 승인금액이 달라 다른 결제 건으로 판단됨.' },

@@ -4,9 +4,11 @@ import { generateConclusion } from './conclusionGenerator'
 
 function detectPosType(entries: LogEntry[], posTypeHint?: string): PosType {
   for (const entry of entries) {
+    if (entry.ptxId?.startsWith('APOS-')) return 'APOS'
     if (entry.ptxId?.startsWith('BPOS-')) return 'BPOS'
     if (entry.ptxId?.startsWith('CPOS-')) return 'CPOS'
   }
+  if (posTypeHint === 'APOS') return 'APOS'
   if (posTypeHint === 'BPOS') return 'BPOS'
   if (posTypeHint === 'CPOS') return 'CPOS'
   return 'UNKNOWN'
@@ -17,7 +19,7 @@ function detectTerminal(entries: LogEntry[], posTypeHint?: string): TerminalType
     if (entry.rawLog.includes('T650P') || entry.source === 'TERMINAL') return 'Eximbay'
   }
   // 엑셀에서 serviceType이 있으면 결제 불일치 알림 대상 = Eximbay 단말기
-  if (posTypeHint === 'BPOS' || posTypeHint === 'CPOS') return 'Eximbay'
+  if (posTypeHint === 'APOS' || posTypeHint === 'BPOS' || posTypeHint === 'CPOS') return 'Eximbay'
   return 'UNKNOWN'
 }
 
