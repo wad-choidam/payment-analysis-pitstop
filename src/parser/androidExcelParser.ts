@@ -153,3 +153,19 @@ function buildRawLog(timestamp: string, data2: string, ptxId: string | undefined
   if (response?.resultMessage) parts.push(response.resultMessage.trim())
   return parts.join(' | ')
 }
+
+/**
+ * Android 엑셀에서 추출한 LogEntry[]를 iOS detailLog와 유사한 형식의 텍스트로 렌더링한다.
+ * 사용자가 텍스트 영역에서 어떤 이벤트가 들어왔는지 한눈에 볼 수 있도록 한다.
+ */
+export function formatAndroidEntriesAsText(entries: LogEntry[]): string {
+  return entries
+    .map((e) => {
+      const parts: string[] = [`#${e.timestamp}`, e.event]
+      if (e.ptxId) parts.push(e.ptxId)
+      if (e.resultCode) parts.push(`res: ${e.resultCode}`)
+      if (e.resultMessage) parts.push(e.resultMessage)
+      return parts.join(' | ')
+    })
+    .join('\n')
+}

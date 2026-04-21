@@ -1,4 +1,3 @@
-import { read, utils } from 'xlsx'
 import type { LogEntry } from '../types'
 import { parseAndroidExcelRows, type AndroidExcelRow } from './androidExcelParser'
 
@@ -26,10 +25,18 @@ export interface ExcelParseResult {
  * - 시트가 없는 경우
  * - 분석 가능한 로그 데이터가 한 건도 없는 경우
  */
-export function extractPosLogFromExcel(buffer: ArrayBuffer): ExcelParseResult {
+export async function extractPosLogFromExcel(buffer: ArrayBuffer): Promise<ExcelParseResult> {
+  // xlsx 라이브러리는 200KB+로 무거워 파일 업로드 시점에만 동적 로드 (초기 번들 크기 절감)
+  let xlsx: typeof import('xlsx')
+  try {
+    xlsx = await import('xlsx')
+  } catch {
+    return { posLog: '', error: '엑셀 파서 로드에 실패했습니다. 네트워크 상태를 확인한 후 다시 시도해 주세요.' }
+  }
+
   let wb
   try {
-    wb = read(buffer, { type: 'array' })
+    wb = xlsx.read(buffer, { type: 'array' })
   } catch {
     return { posLog: '', error: '엑셀 파일을 읽을 수 없습니다. 파일이 손상되었거나 지원되지 않는 형식일 수 있습니다.' }
   }
@@ -38,7 +45,7 @@ export function extractPosLogFromExcel(buffer: ArrayBuffer): ExcelParseResult {
   const ws = firstSheetName ? wb.Sheets[firstSheetName] : undefined
   if (!ws) return { posLog: '', error: '엑셀 파일에서 시트를 찾을 수 없습니다.' }
 
-  const rows = utils.sheet_to_json<Record<string, string>>(ws)
+  const rows = xlsx.utils.sheet_to_json<Record<string, string>>(ws)
   if (rows.length === 0) return { posLog: '', error: '엑셀 시트에 데이터가 없습니다.' }
 
   let serviceType: string | undefined

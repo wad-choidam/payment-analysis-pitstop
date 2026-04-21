@@ -1,22 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { extractPosLogFromExcel, isExcelFile } from '../../parser/excelLogParser'
+import { formatAndroidEntriesAsText } from '../../parser/androidExcelParser'
 import type { LogEntry } from '../../types'
-
-/**
- * Android 엑셀에서 추출한 LogEntry[]를 iOS detailLog와 유사한 형식의 텍스트로 렌더링한다.
- * 각 줄: `#HH:mm:ss.mmm 이벤트명 | ptxId | res: 코드 | 메시지`
- */
-function formatAndroidEntriesAsText(entries: LogEntry[]): string {
-  return entries
-    .map((e) => {
-      const parts: string[] = [`#${e.timestamp}`, e.event]
-      if (e.ptxId) parts.push(e.ptxId)
-      if (e.resultCode) parts.push(`res: ${e.resultCode}`)
-      if (e.resultMessage) parts.push(e.resultMessage)
-      return parts.join(' | ')
-    })
-    .join('\n')
-}
 
 interface LogTextAreaProps {
   label: string
@@ -46,10 +31,10 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
 
     if (isExcelFile(file)) {
       const reader = new FileReader()
-      reader.onload = (ev) => {
+      reader.onload = async (ev) => {
         try {
           const buffer = ev.target?.result as ArrayBuffer
-          const result = extractPosLogFromExcel(buffer)
+          const result = await extractPosLogFromExcel(buffer)
           if (result.error) {
             onParseError?.(result.error)
             return

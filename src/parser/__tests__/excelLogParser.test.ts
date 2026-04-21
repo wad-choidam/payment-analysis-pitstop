@@ -10,7 +10,7 @@ function createTestExcel(rows: Record<string, string>[]): ArrayBuffer {
 }
 
 describe('extractPosLogFromExcel', () => {
-  it('extracts detailLog from raw JSON column', () => {
+  it('extracts detailLog from raw JSON column', async () => {
     const rows = [
       {
         regDateTime: '2026-03-08T18:19:40',
@@ -23,39 +23,39 @@ describe('extractPosLogFromExcel', () => {
       },
     ]
     const buffer = createTestExcel(rows)
-    const result = extractPosLogFromExcel(buffer)
+    const result = await extractPosLogFromExcel(buffer)
     expect(result.posLog).toContain('[전송] 승인 접속 시도')
     expect(result.posLog).toContain('[수신] 단말기 접속 성공')
   })
 
-  it('concatenates multiple rows', () => {
+  it('concatenates multiple rows', async () => {
     const rows = [
       { raw: JSON.stringify({ raw: { detailLog: '#18:19:30.039 [전송] 승인 접속 시도' } }) },
       { raw: JSON.stringify({ raw: { detailLog: '#18:19:43.407 [전송] 승인 접속 시도' } }) },
     ]
     const buffer = createTestExcel(rows)
-    const result = extractPosLogFromExcel(buffer)
+    const result = await extractPosLogFromExcel(buffer)
     expect(result.posLog).toContain('18:19:30')
     expect(result.posLog).toContain('18:19:43')
   })
 
-  it('returns empty for empty workbook', () => {
+  it('returns empty for empty workbook', async () => {
     const buffer = createTestExcel([])
-    const result = extractPosLogFromExcel(buffer)
+    const result = await extractPosLogFromExcel(buffer)
     expect(result.posLog).toBe('')
   })
 
-  it('skips rows with invalid JSON in raw column', () => {
+  it('skips rows with invalid JSON in raw column', async () => {
     const rows = [
       { raw: 'not-json' },
       { raw: JSON.stringify({ raw: { detailLog: '#12:00:00.000 [전송] 승인 접속 시도' } }) },
     ]
     const buffer = createTestExcel(rows)
-    const result = extractPosLogFromExcel(buffer)
+    const result = await extractPosLogFromExcel(buffer)
     expect(result.posLog).toContain('승인 접속 시도')
   })
 
-  it('extracts serviceType from rows', () => {
+  it('extracts serviceType from rows', async () => {
     const rows = [
       {
         serviceType: 'BPOS',
@@ -63,7 +63,7 @@ describe('extractPosLogFromExcel', () => {
       },
     ]
     const buffer = createTestExcel(rows)
-    const result = extractPosLogFromExcel(buffer)
+    const result = await extractPosLogFromExcel(buffer)
     expect(result.serviceType).toBe('BPOS')
   })
 })
