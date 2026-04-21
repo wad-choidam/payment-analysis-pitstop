@@ -64,6 +64,12 @@ const DESCRIPTIONS: { keyword: string; description: string }[] = [
   // 중복결제 확인
   { keyword: '알고있는 승인내역', description: '직전거래 조회 결과 이미 POS가 인지하고 있는 결제 건으로 확인됨. 정상 상태.' },
   { keyword: '승인금액 다름', description: '직전 거래와 현재 요청의 승인금액이 달라 다른 결제 건으로 판단됨.' },
+  // 취소
+  { keyword: '취소 요청', description: '사용자 또는 POS가 이전 승인을 취소 요청.' },
+  { keyword: '취소 성공', description: 'VAN 취소 승인 완료.' },
+  // 간편결제 / 바코드
+  { keyword: '간편결제', description: '간편결제 수단으로 시도. AOS 특정 매장에서 발생.' },
+  { keyword: '바코드 스캔', description: '간편결제용 바코드 스캔 이벤트.' },
 ]
 
 export function getEventDescription(event: string): string | null {

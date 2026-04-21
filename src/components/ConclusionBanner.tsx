@@ -53,6 +53,11 @@ export function ConclusionBanner({ result }: ConclusionBannerProps) {
                 VAN 실 승인: <span className="font-bold" style={{ color: textColor }}>{result.actualApprovalCount ?? 0}건</span>
               </span>
             </div>
+            {(result.actualApprovalCount ?? 0) >= 2 && (
+              <div className="mt-2 text-xs text-yellow-400">
+                복수 승인 감지 — 동일 결제 반복인지 별도 주문인지 UBMS에서 ptxId별 확인 필요
+              </div>
+            )}
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}

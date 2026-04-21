@@ -115,6 +115,16 @@ function mapEvent(data2: string, response: AndroidResponse | undefined): { event
       return { event: '직전거래 조회 요청', status: 'info' }
     case '이전 카드 데이터 응답':
       return classifyPreviousResponse(resultCode, resultMessage)
+    case '카드 취소 클릭':
+      return { event: '취소 요청', status: 'warning' }
+    case '카드 취소 데이터 응답':
+      return classifyCancelResponse(resultCode, resultMessage)
+    case '간편결제 승인 클릭':
+      return { event: '간편결제 요청', status: 'info' }
+    case '간편결제 데이터 응답':
+      return classifyCardResponse(resultCode, resultMessage)
+    case '바코드 스캔':
+      return { event: '바코드 스캔', status: 'info' }
     default:
       return { event: trimmed || '알 수 없는 이벤트', status: 'info' }
   }
@@ -127,6 +137,13 @@ function classifyCardResponse(code: string | undefined, message: string | undefi
   if (message?.includes('타이머') || message?.toLowerCase().includes('timeout')) return { event: '타이머 만료', status: 'failure' }
   if (message) return { event: `승인 실패 (${message})`, status: 'failure' }
   return { event: '승인 실패', status: 'failure' }
+}
+
+function classifyCancelResponse(code: string | undefined, message: string | undefined): { event: string; status: LogStatus } {
+  if (code === '0000') return { event: '취소 성공', status: 'success' }
+  if (code === '9999') return { event: '취소 실패 (단말기 수신 불가)', status: 'failure' }
+  if (message) return { event: `취소 실패 (${message})`, status: 'failure' }
+  return { event: '취소 실패', status: 'failure' }
 }
 
 function classifyPreviousResponse(code: string | undefined, message: string | undefined): { event: string; status: LogStatus } {
