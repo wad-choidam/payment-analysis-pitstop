@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { LogInputSection } from '../components/LogInput/LogInputSection'
 import { ConclusionBanner } from '../components/ConclusionBanner'
 import { AnalysisSummary } from '../components/AnalysisSummary'
@@ -22,6 +22,20 @@ export function AnalyzePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [sampleLoaded, setSampleLoaded] = useState<'bpos' | 'apos' | null>(null)
   const [parseError, setParseError] = useState<string | null>(null)
+  const [parseWarning, setParseWarning] = useState<string | null>(null)
+
+  const analyzeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    // 언마운트 시 대기 중인 타이머를 정리해 stale closure로 인한 setState를 방지
+    return () => {
+      if (analyzeTimerRef.current) clearTimeout(analyzeTimerRef.current)
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current)
+      if (warningTimerRef.current) clearTimeout(warningTimerRef.current)
+    }
+  }, [])
 
   const handleReset = useCallback(() => {
     setPosLog('')
@@ -31,19 +45,31 @@ export function AnalyzePage() {
     setResult(null)
     setSampleLoaded(null)
     setParseError(null)
+    setParseWarning(null)
+    if (analyzeTimerRef.current) clearTimeout(analyzeTimerRef.current)
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current)
+    if (warningTimerRef.current) clearTimeout(warningTimerRef.current)
   }, [])
 
   const handleParseError = useCallback((message: string) => {
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current)
     setParseError(message)
-    setTimeout(() => setParseError(null), 6000)
+    errorTimerRef.current = setTimeout(() => setParseError(null), 6000)
+  }, [])
+
+  const handleParseWarning = useCallback((message: string) => {
+    if (warningTimerRef.current) clearTimeout(warningTimerRef.current)
+    setParseWarning(message)
+    warningTimerRef.current = setTimeout(() => setParseWarning(null), 8000)
   }, [])
 
   const handleAnalyze = useCallback(() => {
+    if (analyzeTimerRef.current) clearTimeout(analyzeTimerRef.current)
     setResult(null)
     setIsLoading(true)
     setSampleLoaded(null)
 
-    setTimeout(() => {
+    analyzeTimerRef.current = setTimeout(() => {
       let analysisEntries: LogEntry[]
       if (androidEntries.length > 0) {
         analysisEntries = androidEntries
@@ -123,6 +149,7 @@ export function AnalyzePage() {
         onServiceTypeDetected={setServiceType}
         onAndroidEntriesDetected={setAndroidEntries}
         onParseError={handleParseError}
+        onParseWarning={handleParseWarning}
         onAnalyze={handleAnalyze}
         onReset={handleReset}
         isAnalyzable={isAnalyzable}
@@ -143,6 +170,29 @@ export function AnalyzePage() {
             <button
               type="button"
               onClick={() => setParseError(null)}
+              className="text-gray-500 hover:text-gray-300 cursor-pointer"
+              aria-label="닫기"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {parseWarning && (
+        <div
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 max-w-md bg-[#2a2616] border border-[#ffd700] text-[#ffe68a] px-4 py-3 rounded-lg shadow-lg text-sm z-50 animate-fade-in-up"
+          role="status"
+        >
+          <div className="flex items-start gap-2">
+            <span>ℹ️</span>
+            <div className="flex-1">
+              <div className="font-bold text-[#ffd700] mb-0.5">참고</div>
+              <div className="text-gray-300">{parseWarning}</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setParseWarning(null)}
               className="text-gray-500 hover:text-gray-300 cursor-pointer"
               aria-label="닫기"
             >

@@ -12,6 +12,8 @@ export interface ExcelParseResult {
   androidEntries?: LogEntry[];
   /** 파싱 실패/구조 불일치/빈 데이터 시 사용자에게 노출할 한글 에러 메시지. 성공 시 undefined. */
   error?: string;
+  /** 파싱은 성공했지만 사용자가 인지할 필요가 있는 이슈 (예: 시트가 여러 개) */
+  warning?: string;
 }
 
 /**
@@ -45,6 +47,10 @@ export async function extractPosLogFromExcel(buffer: ArrayBuffer): Promise<Excel
   const ws = firstSheetName ? wb.Sheets[firstSheetName] : undefined
   if (!ws) return { posLog: '', error: '엑셀 파일에서 시트를 찾을 수 없습니다.' }
 
+  const multiSheetWarning = wb.SheetNames.length > 1
+    ? `시트가 ${wb.SheetNames.length}개 있어 첫 번째 시트("${firstSheetName}")만 사용했습니다. 다른 시트: ${wb.SheetNames.slice(1).map(n => `"${n}"`).join(', ')}`
+    : undefined
+
   const rows = xlsx.utils.sheet_to_json<Record<string, string>>(ws)
   if (rows.length === 0) return { posLog: '', error: '엑셀 시트에 데이터가 없습니다.' }
 
@@ -62,7 +68,7 @@ export async function extractPosLogFromExcel(buffer: ArrayBuffer): Promise<Excel
     if (androidEntries.length === 0) {
       return { posLog: '', serviceType: 'APOS', osType, error: '안드로이드 이벤트 로그를 추출하지 못했습니다. 엑셀 구조가 예상과 다를 수 있습니다.' }
     }
-    return { posLog: '', serviceType: 'APOS', osType, androidEntries }
+    return { posLog: '', serviceType: 'APOS', osType, androidEntries, warning: multiSheetWarning }
   }
 
   const detailLogs: string[] = []
@@ -94,6 +100,7 @@ export async function extractPosLogFromExcel(buffer: ArrayBuffer): Promise<Excel
     posLog: detailLogs.join('\n'),
     serviceType,
     osType,
+    warning: multiSheetWarning,
   }
 }
 

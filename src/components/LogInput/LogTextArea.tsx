@@ -10,13 +10,14 @@ interface LogTextAreaProps {
   onServiceTypeDetected?: (serviceType: string) => void
   onAndroidEntriesDetected?: (entries: LogEntry[]) => void
   onParseError?: (message: string) => void
+  onParseWarning?: (message: string) => void
   placeholder?: string
   showFileUpload?: boolean
   readOnly?: boolean
   headerSlot?: React.ReactNode
 }
 
-export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onAndroidEntriesDetected, onParseError, placeholder, showFileUpload = true, readOnly = false, headerSlot }: LogTextAreaProps) {
+export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onAndroidEntriesDetected, onParseError, onParseWarning, placeholder, showFileUpload = true, readOnly = false, headerSlot }: LogTextAreaProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [processingFileName, setProcessingFileName] = useState<string | null>(null)
@@ -56,6 +57,9 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
           if (result.serviceType && onServiceTypeDetected) {
             onServiceTypeDetected(result.serviceType)
           }
+          if (result.warning) {
+            onParseWarning?.(result.warning)
+          }
           setUploadedFileName(file.name)
         } finally {
           finish()
@@ -80,7 +84,7 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
       }
       reader.readAsText(file)
     }
-  }, [onChange, onServiceTypeDetected, onAndroidEntriesDetected, onParseError])
+  }, [onChange, onServiceTypeDetected, onAndroidEntriesDetected, onParseError, onParseWarning])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -138,12 +142,12 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className={`absolute inset-0 flex flex-col items-center justify-center gap-1 rounded transition-all cursor-pointer pointer-events-auto ${
+            aria-label={`${label} 파일 선택`}
+            className={`absolute inset-0 flex flex-col items-center justify-center gap-1 rounded transition-all cursor-pointer pointer-events-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00d2ff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#16213e] ${
               isDragging
                 ? 'bg-[#e94560]/10 text-[#e94560]'
                 : 'text-gray-500 hover:text-[#00d2ff] hover:bg-[#00d2ff]/5'
             }`}
-            tabIndex={-1}
           >
             <span className="text-3xl">{isDragging ? '⬇️' : '📥'}</span>
             <span className="text-xs font-bold">

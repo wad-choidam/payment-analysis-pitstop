@@ -30,4 +30,24 @@ describe('mergeLogEntries', () => {
     expect(merged[0].source).toBe('POS')
     expect(merged[1].source).toBe('TERMINAL')
   })
+
+  it('sorts numerically across seconds/minutes (not lexicographically)', () => {
+    const entries: LogEntry[] = [
+      { timestamp: '09:59:59.900', source: 'POS', event: 'A', rawLog: '', status: 'info' },
+      { timestamp: '10:00:00.100', source: 'POS', event: 'B', rawLog: '', status: 'info' },
+      { timestamp: '09:09:59', source: 'POS', event: 'earliest', rawLog: '', status: 'info' },
+    ]
+    const merged = mergeLogEntries(entries, [])
+    expect(merged.map(e => e.event)).toEqual(['earliest', 'A', 'B'])
+  })
+
+  it('handles milliseconds precision', () => {
+    const entries: LogEntry[] = [
+      { timestamp: '12:05:40.996', source: 'POS', event: 'C', rawLog: '', status: 'info' },
+      { timestamp: '12:05:40.500', source: 'POS', event: 'A', rawLog: '', status: 'info' },
+      { timestamp: '12:05:40.890', source: 'POS', event: 'B', rawLog: '', status: 'info' },
+    ]
+    const merged = mergeLogEntries(entries, [])
+    expect(merged.map(e => e.event)).toEqual(['A', 'B', 'C'])
+  })
 })

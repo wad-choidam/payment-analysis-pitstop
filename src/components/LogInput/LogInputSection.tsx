@@ -11,6 +11,7 @@ interface LogInputSectionProps {
   onServiceTypeDetected?: (serviceType: string) => void
   onAndroidEntriesDetected?: (entries: LogEntry[]) => void
   onParseError?: (message: string) => void
+  onParseWarning?: (message: string) => void
   onAnalyze: () => void
   onReset: () => void
   isAnalyzable: boolean
@@ -26,6 +27,7 @@ export function LogInputSection({
   onServiceTypeDetected,
   onAndroidEntriesDetected,
   onParseError,
+  onParseWarning,
   onAnalyze,
   onReset,
   isAnalyzable,
@@ -60,6 +62,7 @@ export function LogInputSection({
           onServiceTypeDetected={onServiceTypeDetected}
           onAndroidEntriesDetected={onAndroidEntriesDetected}
           onParseError={onParseError}
+          onParseWarning={onParseWarning}
           readOnly
           headerSlot={serviceType ? <PlatformBadge serviceType={serviceType} /> : null}
         />
