@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { extractPosLogFromExcel, isExcelFile } from '../../parser/excelLogParser'
 import { formatAndroidEntriesAsText } from '../../parser/androidExcelParser'
 import type { LogEntry } from '../../types'
@@ -20,7 +20,13 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
   const [isDragging, setIsDragging] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [processingFileName, setProcessingFileName] = useState<string | null>(null)
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 사용자가 초기화해서 textarea가 비면 파일명 표시도 해제
+  useEffect(() => {
+    if (!value) setUploadedFileName(null)
+  }, [value])
 
   const readFile = useCallback((file: File) => {
     setIsProcessing(true)
@@ -50,6 +56,7 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
           if (result.serviceType && onServiceTypeDetected) {
             onServiceTypeDetected(result.serviceType)
           }
+          setUploadedFileName(file.name)
         } finally {
           finish()
         }
@@ -64,6 +71,7 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
       reader.onload = (ev) => {
         onChange(ev.target?.result as string)
         onAndroidEntriesDetected?.([])
+        setUploadedFileName(file.name)
         finish()
       }
       reader.onerror = () => {
@@ -95,8 +103,16 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
       onDragLeave={() => setIsDragging(false)}
       onDrop={handleDrop}
     >
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-gray-400 text-sm font-bold">{label}</span>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <span className="text-gray-400 text-sm font-bold shrink-0">{label}</span>
+        {uploadedFileName && (
+          <span
+            className="text-xs text-gray-500 truncate animate-fade-in"
+            title={uploadedFileName}
+          >
+            📄 {uploadedFileName}
+          </span>
+        )}
         {showFileUpload && (
           <input
             ref={fileInputRef}

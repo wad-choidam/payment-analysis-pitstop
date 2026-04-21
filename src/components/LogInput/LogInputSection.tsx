@@ -47,10 +47,7 @@ export function LogInputSection({
               샘플 로그가 불러와졌습니다 — {sampleLoaded === 'bpos' ? '미무 1274840 (BPOS)' : '킴보 1513721 (APOS)'}
             </div>
             <div className="text-gray-400 text-xs">
-              {sampleLoaded === 'bpos'
-                ? '과거 ptxId가 섞인 직전거래 응답이 포함된 복잡한 5회 시도 케이스입니다.'
-                : '안드로이드 2회 시도 케이스. 두 번째 시도에서 단말기 수신 불가(9999) 발생.'}
-              {' '}아래 <span className="text-[#e94560] font-bold">분석 시작</span> 버튼을 눌러 결과를 확인해 보세요.
+              아래 <span className="text-[#e94560] font-bold">분석 시작</span> 버튼을 눌러 결과를 확인해 보세요.
             </div>
           </div>
         </div>
