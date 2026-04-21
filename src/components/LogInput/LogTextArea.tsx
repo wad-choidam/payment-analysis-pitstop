@@ -125,6 +125,7 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
               type="file"
               accept=".txt,.log,.xlsx,.xls"
               onChange={handleFileSelect}
+              onClick={(e) => { (e.target as HTMLInputElement).value = '' }}
               className="hidden"
             />
           </>
