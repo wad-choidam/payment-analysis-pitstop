@@ -32,39 +32,58 @@ interface LogTextAreaProps {
 
 export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onAndroidEntriesDetected, onParseError, placeholder, showFileUpload = true, headerSlot }: LogTextAreaProps) {
   const [isDragging, setIsDragging] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [processingFileName, setProcessingFileName] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const readFile = useCallback((file: File) => {
+    setIsProcessing(true)
+    setProcessingFileName(file.name)
+    const finish = () => {
+      setIsProcessing(false)
+      setProcessingFileName(null)
+    }
+
     if (isExcelFile(file)) {
       const reader = new FileReader()
       reader.onload = (ev) => {
-        const buffer = ev.target?.result as ArrayBuffer
-        const result = extractPosLogFromExcel(buffer)
-        if (result.error) {
-          onParseError?.(result.error)
-          return
-        }
-        if (result.androidEntries && result.androidEntries.length > 0) {
-          // 안드로이드: entries를 iOS 포스 로그와 유사한 한 줄 텍스트로 렌더링해 사용자에게 노출
-          onChange(formatAndroidEntriesAsText(result.androidEntries))
-          onAndroidEntriesDetected?.(result.androidEntries)
-        } else {
-          onChange(result.posLog)
-          onAndroidEntriesDetected?.([])
-        }
-        if (result.serviceType && onServiceTypeDetected) {
-          onServiceTypeDetected(result.serviceType)
+        try {
+          const buffer = ev.target?.result as ArrayBuffer
+          const result = extractPosLogFromExcel(buffer)
+          if (result.error) {
+            onParseError?.(result.error)
+            return
+          }
+          if (result.androidEntries && result.androidEntries.length > 0) {
+            onChange(formatAndroidEntriesAsText(result.androidEntries))
+            onAndroidEntriesDetected?.(result.androidEntries)
+          } else {
+            onChange(result.posLog)
+            onAndroidEntriesDetected?.([])
+          }
+          if (result.serviceType && onServiceTypeDetected) {
+            onServiceTypeDetected(result.serviceType)
+          }
+        } finally {
+          finish()
         }
       }
-      reader.onerror = () => onParseError?.('파일을 읽는 중 오류가 발생했습니다.')
+      reader.onerror = () => {
+        onParseError?.('파일을 읽는 중 오류가 발생했습니다.')
+        finish()
+      }
       reader.readAsArrayBuffer(file)
     } else {
       const reader = new FileReader()
       reader.onload = (ev) => {
         onChange(ev.target?.result as string)
         onAndroidEntriesDetected?.([])
+        finish()
       }
-      reader.onerror = () => onParseError?.('파일을 읽는 중 오류가 발생했습니다.')
+      reader.onerror = () => {
+        onParseError?.('파일을 읽는 중 오류가 발생했습니다.')
+        finish()
+      }
       reader.readAsText(file)
     }
   }, [onChange, onServiceTypeDetected, onAndroidEntriesDetected, onParseError])
@@ -112,12 +131,26 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
         )}
       </div>
       {headerSlot && <div className="mb-2 animate-fade-in">{headerSlot}</div>}
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder ?? '텍스트를 붙여넣거나 파일을 드래그하세요...'}
-        className="w-full bg-[#0a0a1a] rounded p-3 text-gray-300 text-xs font-mono min-h-[120px] resize-y border-none outline-none placeholder-gray-600"
-      />
+      <div className="relative">
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder ?? '텍스트를 붙여넣거나 파일을 드래그하세요...'}
+          disabled={isProcessing}
+          className="w-full bg-[#0a0a1a] rounded p-3 text-gray-300 text-xs font-mono min-h-[120px] resize-y border-none outline-none placeholder-gray-600 disabled:opacity-60"
+        />
+        {isProcessing && (
+          <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a1a]/70 rounded backdrop-blur-[1px]">
+            <div className="flex items-center gap-2.5 bg-[#16213e] border border-[#00d2ff] rounded-md px-4 py-2.5 shadow-lg">
+              <div className="w-4 h-4 border-2 border-[#00d2ff] border-t-transparent rounded-full animate-spin" />
+              <span className="text-xs text-[#00d2ff] font-bold">
+                파일 읽는 중...
+                {processingFileName && <span className="text-gray-400 font-normal ml-2">{processingFileName}</span>}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
