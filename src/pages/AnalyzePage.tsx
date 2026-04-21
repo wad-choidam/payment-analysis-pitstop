@@ -107,7 +107,7 @@ export function AnalyzePage() {
               <div className="text-xs text-gray-400 mt-0.5">
                 {sampleLoaded === 'bpos' && '미무 1274840 (BPOS, 5회 시도) 로그를 불러왔습니다.'}
                 {sampleLoaded === 'apos' && '킴보 1513721 (APOS, 2회 시도) 로그를 불러왔습니다.'}
-                {!sampleLoaded && '실제 분석 사례를 한 번에 불러옵니다 (iOS 5회 시도 / Android 2회 시도)'}
+                {!sampleLoaded && '실제 분석 사례를 한 번에 불러옵니다'}
               </div>
             </div>
           </div>

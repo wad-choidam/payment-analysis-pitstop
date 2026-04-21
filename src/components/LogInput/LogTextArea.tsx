@@ -12,10 +12,11 @@ interface LogTextAreaProps {
   onParseError?: (message: string) => void
   placeholder?: string
   showFileUpload?: boolean
+  readOnly?: boolean
   headerSlot?: React.ReactNode
 }
 
-export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onAndroidEntriesDetected, onParseError, placeholder, showFileUpload = true, headerSlot }: LogTextAreaProps) {
+export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onAndroidEntriesDetected, onParseError, placeholder, showFileUpload = true, readOnly = false, headerSlot }: LogTextAreaProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [processingFileName, setProcessingFileName] = useState<string | null>(null)
@@ -97,23 +98,14 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
       <div className="flex items-center justify-between mb-2">
         <span className="text-gray-400 text-sm font-bold">{label}</span>
         {showFileUpload && (
-          <>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="text-xs text-[#00d2ff] hover:text-[#00e5ff] cursor-pointer"
-            >
-              파일 선택
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".txt,.log,.xlsx,.xls"
-              onChange={handleFileSelect}
-              onClick={(e) => { (e.target as HTMLInputElement).value = '' }}
-              className="hidden"
-            />
-          </>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".txt,.log,.xlsx,.xls"
+            onChange={handleFileSelect}
+            onClick={(e) => { (e.target as HTMLInputElement).value = '' }}
+            className="hidden"
+          />
         )}
       </div>
       {headerSlot && <div className="mb-2 animate-fade-in">{headerSlot}</div>}
@@ -121,10 +113,29 @@ export function LogTextArea({ label, value, onChange, onServiceTypeDetected, onA
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder ?? '텍스트를 붙여넣거나 파일을 드래그하세요...'}
+          placeholder={readOnly ? '' : (placeholder ?? '텍스트를 붙여넣거나 파일을 드래그하세요...')}
           disabled={isProcessing}
-          className="w-full bg-[#0a0a1a] rounded p-3 text-gray-300 text-xs font-mono min-h-[120px] resize-y border-none outline-none placeholder-gray-600 disabled:opacity-60"
+          readOnly={readOnly}
+          className="w-full bg-[#0a0a1a] rounded p-3 text-gray-300 text-xs font-mono min-h-[120px] resize-y border-none outline-none placeholder-gray-600 disabled:opacity-60 read-only:cursor-default"
         />
+        {showFileUpload && !value && !isProcessing && (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className={`absolute inset-0 flex flex-col items-center justify-center gap-1 rounded transition-all cursor-pointer pointer-events-auto ${
+              isDragging
+                ? 'bg-[#e94560]/10 text-[#e94560]'
+                : 'text-gray-500 hover:text-[#00d2ff] hover:bg-[#00d2ff]/5'
+            }`}
+            tabIndex={-1}
+          >
+            <span className="text-3xl">{isDragging ? '⬇️' : '📥'}</span>
+            <span className="text-xs font-bold">
+              {isDragging ? '여기에 놓으세요' : '엑셀 파일을 드롭하거나 클릭'}
+            </span>
+            <span className="text-[10px] text-gray-600">.xlsx · .xls · .txt</span>
+          </button>
+        )}
         {isProcessing && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a1a]/70 rounded backdrop-blur-[1px]">
             <div className="flex items-center gap-2.5 bg-[#16213e] border border-[#00d2ff] rounded-md px-4 py-2.5 shadow-lg">

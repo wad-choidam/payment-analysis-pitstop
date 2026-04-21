@@ -63,7 +63,7 @@ export function LogInputSection({
           onServiceTypeDetected={onServiceTypeDetected}
           onAndroidEntriesDetected={onAndroidEntriesDetected}
           onParseError={onParseError}
-          placeholder="엑셀(.xlsx) 파일을 드래그하거나 텍스트를 붙여넣으세요..."
+          readOnly
           headerSlot={serviceType ? <PlatformBadge serviceType={serviceType} /> : null}
         />
         <LogTextArea
